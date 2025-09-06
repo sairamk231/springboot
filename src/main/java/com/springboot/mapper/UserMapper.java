@@ -8,8 +8,8 @@ import org.mapstruct.Mapper;
 @Mapper
 public interface UserMapper {
 
-//    UserInfo toEntity(UserRequest userRequest);
-//
-//    UserResponse toUserResponse(UserInfo userInfo);
+    UserInfo toEntity(UserRequest userRequest);
+
+    UserResponse toUserResponse(UserInfo userInfo);
 
 }
