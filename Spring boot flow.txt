@@ -1,0 +1,198 @@
+A Spring Boot application processes HTTP requests through a defined flow involving filters, Spring Security's filter chain, and interceptors, ultimately reaching the controller.
+
+
+1. Request Entry and Filters:
+An incoming HTTP request first encounters Servlet Filters. These are part of the Servlet API and operate at a low level, before the request reaches Spring's DispatcherServlet.
+Filters are suitable for cross-cutting concerns like logging, character encoding, CORS handling, and general pre-processing or post-processing of the raw HTTP request and response.
+Spring Security integrates into this filter chain by registering a DelegatingFilterProxy which delegates to the FilterChainProxy, managing its own set of security-specific filters.
+
+
+2. Spring Security's Filter Chain:
+Within the FilterChainProxy, Spring Security applies a series of security filters. These filters handle authentication, authorization, session management, CSRF protection, and other security concerns.
+Examples include UsernamePasswordAuthenticationFilter for form-based login, BasicAuthenticationFilter for HTTP Basic authentication, and AuthorizationFilter for access control decisions.
+If a request fails security checks at any point in this chain, the process is typically halted, and an appropriate error response is returned.
+
+
+3. DispatcherServlet and Interceptors:
+If the request successfully passes through the security filter chain, it then reaches Spring's DispatcherServlet.
+The DispatcherServlet is the central component of Spring MVC, responsible for dispatching requests to appropriate controllers.
+Before a request reaches a controller method, Spring MVC Interceptors can be applied. Interceptors are part of Spring MVC and offer more fine-grained control than filters, operating within the Spring application context.
+Interceptors can perform pre-handling (before the controller method), post-handling (after the controller method but before view rendering), and after completion (after view rendering). They are commonly used for tasks like logging, performance monitoring, or modifying model attributes.
+
+
+4. Controller Processing:
+After passing through any configured interceptors, the DispatcherServlet dispatches the request to the appropriate controller method based on request mapping.
+The controller method processes the request, interacts with services and repositories, and prepares data for the response.
+5. Response Generation:
+After the controller method completes, the response flows back through the interceptors (post-handling and after completion phases) and then through the filters (in reverse order) before being sent back to the client.
+
+JDK = used to develop java applications (JRE + Javac(compiler) + debugging tools)
+JRE = software packages + JVM + class libraries + other components to run java program
+JVM = provides environment to run java byte code.
+
+
+@SpringBootApplication:
+@Configuration : Marks the class as a source of bean definitions (like XML config, but in Java)
+
+@EnableAutoConfiguration : Tells Spring Boot to auto-configure beans based on classpath dependencies
+
+@ComponentScan : Enables scanning for components (@Component, @Service, @Repository, etc.) in the current package and sub-packages
+
+
+All of these annotations—@Service, @Repository, @RestController—are specializations of @Component. That means they:
+- Are detected during component scanning
+- Are registered as beans in the Spring context
+- Support dependency injection
+
+
+- Use @Component when your class doesn’t clearly belong to service, DAO, or controller layers.
+- Use @Service for classes that contain business logic or service orchestration.
+- Use @Repository for classes that interact with the database (e.g., using JdbcTemplate or JPA).
+- Use @RestController for REST APIs—it automatically serializes return values to JSON/XML.
+
+
+Dependency Injection (DI) is a core concept that allows the framework to automatically provide the objects (dependencies) a class needs, 
+rather than the class creating them itself. This promotes loose coupling, testability, and clean architecture.
+Spring Boot automatically:
+- Scans for @Component, @Service, @Repository, etc.
+- Creates beans
+- Injects them where needed
+
+The @Autowired annotation in Spring is used to automatically inject dependencies into a class—no need to manually instantiate or wire them. 
+It’s part of Spring’s Dependency Injection (DI) mechanism and works seamlessly in both Spring MVC and Spring Boot.
+
+
+when multiple bean of the same type exist.
+- @Qualifier used alongside @Autowired to specify the exact bean
+
+public interface Formatter {
+    String format();
+}
+
+@Component("fooFormatter")
+public class FooFormatter implements Formatter {
+    public String format() {
+        return "foo";
+    }
+}
+
+@Component("barFormatter")
+public class BarFormatter implements Formatter {
+    public String format() {
+        return "bar";
+    }
+}
+
+@Autowired
+@Qualifier("barFormatter")
+private Formatter formatter;
+(or)
+@Service
+public class ReportService {
+
+    private final Formatter formatter;
+
+    @Autowired
+    public ReportService(@Qualifier("fooFormatter") Formatter formatter) {
+        this.formatter = formatter;
+    }
+
+    public void generate() {
+        System.out.println(formatter.format()); // prints "foo"
+    }
+}
+
+
+- Use @Primary to set a default bean
+public interface Vehicle {
+    String getType();
+}
+
+@Component
+public class Car implements Vehicle {
+    public String getType() {
+        return "Car";
+    }
+}
+
+@Component
+@Primary
+public class Bike implements Vehicle {
+    public String getType() {
+        return "Bike";
+    }
+}
+
+@Service
+public class TransportService {
+
+    private final Vehicle vehicle;
+
+    @Autowired
+    public TransportService(Vehicle vehicle) {
+        this.vehicle = vehicle;
+    }
+
+    public void printVehicleType() {
+        System.out.println(vehicle.getType()); // Outputs: "Bike"
+    }
+}
+
+
+The @ConditionalOnProperty annotation in Spring Boot is used to conditionally enable or disable a bean based on the presence and value of a property in your configuration files (application.properties or application.yml)
+
+notification.email.enabled=true
+
+@Configuration
+public class NotificationConfig {
+
+    @Bean
+    @ConditionalOnProperty(
+        prefix = "notification.email",
+        name = "enabled",
+        havingValue = "true"
+    )
+    public NotificationService emailNotificationService() {
+        return new EmailNotificationService();
+    }
+}
+
+
+
+The @RequestMapping annotation is used to map requests to controllers methods. It has various attributes to match by URL, HTTP method, request parameters, headers, and media types. You can use it at the class level to express shared mappings or at the method level to narrow down to a specific endpoint mapping.
+
+@RestController:
+This is a convenience annotation that combines @Controller and @ResponseBody. It indicates that a class is a Spring MVC controller and that all methods within it should return a domain object instead of a view name, with the return value automatically converted to JSON or XML.
+@Controller:
+This annotation marks a class as a Spring MVC controller, responsible for handling incoming web requests and returning a view or a response.
+@PathVariable:
+This annotation is used to extract values from the URI path. It binds a method parameter to a URI template variable, allowing for dynamic URLs. 
+@RequestParam:
+This annotation is used to extract individual parameter values from the request URL (query parameters) or submitted form data. 
+@RequestBody:
+This annotation is used to bind the body of an HTTP request to a method parameter. It's typically used for incoming JSON or XML data that needs to be deserialized into a Java object. 
+@ResponseBody:
+This annotation indicates that the return value of a method should be bound to the web response body. It's often used for returning data directly, such as JSON or XML, in RESTful services.
+@GetMapping:
+A specialized version of @RequestMapping used to map HTTP GET requests to specific handler methods.
+@PostMapping:
+A specialized version of @RequestMapping used to map HTTP POST requests to specific handler methods, typically for creating new resources.
+@PutMapping:
+A specialized version of @RequestMapping used to map HTTP PUT requests to specific handler methods, typically for updating existing resources.
+@DeleteMapping:
+A specialized version of @RequestMapping used to map HTTP DELETE requests to specific handler methods, typically for deleting resources.
+@PatchMapping:
+A specialized version of @RequestMapping used to map HTTP PATCH requests to specific handler methods, typically for applying partial modifications to resources.
+
+@Bean:
+Marks the methods within the class as producing beans. By default, beans are singletons.
+@Scope("singleton"):
+Explicitly defines the bean as a singleton, ensuring only one instance exists.
+@Scope("prototype"):
+Defines the bean as prototype, meaning a new instance is created each time the bean is requested.
+
+
+@PostConstruct:
+This annotation marks a method that should be executed after a bean has been fully initialized. This includes the completion of its constructor and the injection of all its dependencies. It is commonly used for tasks that require the bean to be in a fully configured state, such as initializing resources, populating caches, or establishing connections.
+@PreDestroy:
+This annotation marks a method that should be executed just before a bean is destroyed by its container. This is typically used for cleanup operations, such as releasing resources, closing connections, or persisting data, ensuring that no resources are left open or unmanaged when the bean is removed from the application context.

@@ -1,0 +1,41 @@
+zookeeper command:
+bin\windows\zookeeper-server-start.bat config\zookeeper.properties
+
+kafka server command:
+bin\windows\kafka-server-start.bat config\server.properties
+
+
+topic creation command:
+bin\windows\kafka-topics.bat --create --topic new-user-topic --bootstrap-server localhost:9092
+
+topic list check command:
+bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --list
+
+producer command:
+bin\windows\kafka-console-producer.bat --topic new-user-topic --bootstrap-server localhost:9092
+
+
+consumer command:
+bin\windows\kafka-console-consumer.bat --topic new-user-topic --from-beginning --bootstrap-server localhost:9092
+
+
+topic deletion command:
+bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --delete --topic user-topic
+bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --delete --topic new-user-topic
+bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --delete --topic location-update-topic
+
+
+finding duplicates from table:
+
+SELECT country,city, count(*) as country_count from customers where country like '%A%' group by country, city having count(*) > 1;
+
+finding nth high number:
+
+select distinct city from customers order by city desc limit 1 offset n-1;
+
+Joining two tables to fetch combined data:
+
+select m.match_id, m.player_1, m.player_2, m.winner, m.match_date, p.score from matches m join players p on m.winner = p.player_name order by match_date desc limit 5;
+
+note: (join - on) = first filter the rows with condition then only fetch the records,
+whereas (join) = where first it will join tables and then filter based on conditions.
