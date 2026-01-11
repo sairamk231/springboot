@@ -1,0 +1,183 @@
+1. Spring Boot Fundamentals?
+  What is Spring Boot
+  Problems with traditional Spring
+  Features of Spring Boot
+  Spring Boot vs Spring MVC vs Spring
+  Advantages & limitations of Spring Boot
+  Opinionated defaults
+  Convention over configuration
+
+2. Spring Boot Architecture?
+  Spring Boot internal architecture
+  Auto-configuration mechanism
+  Starter dependencies
+  Embedded servers (Tomcat, Jetty, Undertow)
+  Spring Boot application lifecycle
+  @SpringBootApplication annotation (meta-annotations)
+
+3. Spring Boot Project Setup?
+  Creating project using:
+  Spring Initializr (Web UI)
+  Spring Tool Suite (STS)
+  IntelliJ IDEA
+  Maven / Gradle CLI
+  Project structure
+  Maven vs Gradle in Spring Boot
+
+4. Spring Boot Core Annotations?
+  @SpringBootApplication
+  @EnableAutoConfiguration
+  @ComponentScan
+  @Component, @Service, @Repository, @Controller
+  @Configuration, @Bean
+  @Autowired, @Qualifier, @Primary
+  @Value
+  @Profile
+
+5. Configuration Management?
+  application.properties vs application.yml
+  Externalized configuration
+  Profiles (dev, test, prod)
+  Command-line arguments
+  Environment variables
+  Configuration properties (@ConfigurationProperties)
+  Spring Cloud Config (basic overview)
+
+6. Spring Boot Web (REST API)?
+  Spring MVC in Spring Boot
+  RESTful services
+  @RestController
+  @RequestMapping
+  @GetMapping, @PostMapping, @PutMapping, @DeleteMapping
+  @PathVariable
+  @RequestParam
+  @RequestBody
+  @ResponseEntity
+  Content negotiation (JSON/XML)
+
+7. Validation & Exception Handling:
+  Bean Validation (JSR-380)
+  @Valid, @Validated
+  Validation annotations (@NotNull, @Size, @Email, etc.)
+  Global exception handling
+  @ExceptionHandler
+  @ControllerAdvice / @RestControllerAdvice
+  Custom exceptions
+  Error response standardization
+
+8. Spring Boot Data Access
+  a. Spring Data JPA
+    JPA & Hibernate basics
+    Entity mapping (@Entity, @Table, @Id)
+    Relationships:
+      One-to-One
+      One-to-Many
+      Many-to-Many
+    Fetch types (Lazy vs Eager)
+    Cascade types
+    Repository interfaces
+    JpaRepository, CrudRepository
+    Derived query methods
+    JPQL
+    Native queries
+    Pagination & Sorting
+
+  b. JDBC & Other Options
+    Spring JDBC
+    JdbcTemplate
+    NamedParameterJdbcTemplate
+    MyBatis (overview)
+
+9. Transaction Management
+  @Transactional
+  Propagation types
+  Isolation levels
+  Rollback rules
+  Common transaction issues
+  Declarative vs programmatic transactions
+
+10. Spring Boot Security
+  Spring Security basics
+  Authentication & Authorization
+  In-memory authentication
+  Database authentication
+  Role-based access
+  Method-level security
+  JWT authentication
+  OAuth2 basics
+  CSRF
+  CORS configuration
+  Password encoding
+
+11. Spring Boot Actuator
+  Actuator endpoints
+  Health checks
+  Metrics
+  Info endpoint
+  Custom actuator endpoints
+  Production monitoring basics
+
+12. Logging in Spring Boot
+  Logging framework overview
+  Logback (default)
+  Log4j2 integration
+  Logging levels
+  Custom log configuration
+  Log files & rolling policies
+
+13. Spring Boot Testing
+  Testing strategy
+  Unit vs Integration testing
+  @SpringBootTest
+  @WebMvcTest
+  @DataJpaTest
+  Mockito
+  MockMvc
+  TestContainers (basic idea)
+  H2 in-memory database
+  Test profiles
+
+14. Spring Boot Microservices (Basics)
+  Monolithic vs Microservices
+  REST communication
+  Feign Client
+  RestTemplate / WebClient
+  Service discovery (Eureka – overview)
+  API Gateway (overview)
+  Circuit breaker (Resilience4j)
+  Distributed tracing (basics)
+
+15. Performance & Optimization
+  Lazy initialization
+  Connection pooling (HikariCP)
+  Caching (@EnableCaching, @Cacheable)
+  Query optimization
+  Pagination best practices
+  Thread pool configuration
+
+16. Deployment & DevOps
+  Packaging (JAR vs WAR)
+  External server deployment
+  Profiles for environments
+  Dockerizing Spring Boot application
+  Kubernetes (high-level overview)
+  CI/CD integration basics
+
+17. Common Interview Topics
+  How auto-configuration works internally
+  Difference between @Component and @Bean
+  Difference between @Controller and @RestController
+  Embedded server advantages
+  How Spring Boot starts
+  Circular dependency issues
+  Bean lifecycle
+  Common production issues & fixes
+
+18. Best Practices
+  Layered architecture
+  DTO vs Entity
+  Exception handling standards
+  API versioning
+  Secure configuration handling
+  Clean code principles in Spring Boot
+  Logging & monitoring best practices
