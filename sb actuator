@@ -1,0 +1,276 @@
+Spring Boot Actuator:
+Definition:
+
+Spring Boot Actuator is a production-ready feature that provides monitoring, management, and health information about a running Spring Boot application via HTTP endpoints or JMX.
+
+It helps teams monitor application health, metrics, environment, and runtime behavior without writing custom code.
+
+Why Actuator is used:
+Monitor application health
+Track performance metrics
+Check application info
+Enable production monitoring
+Debug issues in live environments
+
+Adding Actuator Dependency:
+Maven:
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
+Actuator Endpoints:
+Definition:
+
+Actuator endpoints expose runtime information about the application.
+
+Common Built-in Endpoints:
+| Endpoint               | Description             |
+| ---------------------- | ----------------------- |
+| `/actuator/health`     | Application health      |
+| `/actuator/info`       | Custom application info |
+| `/actuator/metrics`    | Performance metrics     |
+| `/actuator/env`        | Environment properties  |
+| `/actuator/beans`      | Spring beans            |
+| `/actuator/mappings`   | Request mappings        |
+| `/actuator/loggers`    | Logging configuration   |
+| `/actuator/threaddump` | Thread dump             |
+| `/actuator/heapdump`   | Heap dump               |
+
+Enabling Endpoints:
+By default, only health & info are exposed.
+management.endpoints.web.exposure.include=*
+
+⚠️ In production, never expose all endpoints publicly.
+
+Example:
+Access:
+http://localhost:8080/actuator
+
+Output:
+{
+  "_links": {
+    "health": { "href": "http://localhost:8080/actuator/health" },
+    "metrics": { "href": "http://localhost:8080/actuator/metrics" }
+  }
+}
+
+Health Checks:
+Definition:
+Health checks provide status of application components such as:
+Database
+Disk space
+External services
+Custom checks
+
+Default Health Endpoint:
+GET /actuator/health
+
+Output:
+{
+  "status": "UP"
+}
+
+Detailed Health Info:
+management.endpoint.health.show-details=always
+
+Output:
+{
+  "status": "UP",
+  "components": {
+    "db": {
+      "status": "UP",
+      "details": {
+        "database": "MySQL",
+        "validationQuery": "isValid()"
+      }
+    }
+  }
+}
+
+Custom Health Indicator:
+@Component
+public class CustomHealthIndicator implements HealthIndicator {
+
+    @Override
+    public Health health() {
+        return Health.up()
+                .withDetail("service", "Payment Service")
+                .withDetail("status", "Running")
+                .build();
+    }
+}
+
+Output:
+{
+  "status": "UP",
+  "components": {
+    "customHealthIndicator": {
+      "status": "UP",
+      "details": {
+        "service": "Payment Service",
+        "status": "Running"
+      }
+    }
+  }
+}
+
+Metrics:
+Definition:
+
+Metrics provide performance and usage statistics such as:
+JVM memory
+CPU usage
+HTTP request counts
+Response time
+Garbage collection
+Spring Boot uses Micrometer internally.
+
+Metrics Endpoint:
+GET /actuator/metrics
+
+Output:
+{
+  "names": [
+    "jvm.memory.used",
+    "http.server.requests",
+    "process.cpu.usage"
+  ]
+}
+
+Specific Metric:
+GET /actuator/metrics/jvm.memory.used
+
+Output:
+{
+  "name": "jvm.memory.used",
+  "measurements": [
+    { "statistic": "VALUE", "value": 1.25E7 }
+  ]
+}
+
+Real-Time Monitoring:
+Actuator metrics can be exported to:
+Prometheus
+Grafana
+New Relic
+Datadog
+
+Info Endpoint:
+Definition:
+
+The /info endpoint exposes custom application metadata.
+
+Configuration:
+info.app.name=Order Service
+info.app.version=1.0.0
+info.app.description=Order management application
+
+Endpoint:
+GET /actuator/info
+
+Output:
+{
+  "app": {
+    "name": "Order Service",
+    "version": "1.0.0",
+    "description": "Order management application"
+  }
+}
+
+Custom Actuator Endpoints:
+Definition:
+You can create custom endpoints for application-specific monitoring.
+
+Example:
+@Component
+@Endpoint(id = "customStatus")
+public class CustomStatusEndpoint {
+
+    @ReadOperation
+    public Map<String, String> status() {
+        return Map.of("service", "Order Service", "status", "UP");
+    }
+}
+
+Access:
+GET /actuator/customStatus
+
+Output:
+{
+  "service": "Order Service",
+  "status": "UP"
+}
+
+Production Monitoring Basics:
+Best Practices:
+Expose only required endpoints
+Secure actuator endpoints
+Use authentication & authorization
+Integrate with monitoring tools
+Never expose sensitive endpoints publicly
+
+Secure Endpoints:
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=when_authorized
+
+Common Production Setup:
+/health → Load balancer
+/metrics → Prometheus
+/info → Application metadata
+
+Interview Questions & Answers:
+Q1. What is Spring Boot Actuator?
+
+Answer:
+Spring Boot Actuator provides production-ready features to monitor and manage applications through endpoints exposing health, metrics, and runtime data.
+
+Q2. Which endpoints are enabled by default?
+Answer:
+Only health and info endpoints are enabled by default.
+
+Q3. How does Actuator collect metrics?
+Answer:
+Using Micrometer, which acts as a vendor-neutral metrics facade.
+
+Q4. Difference between /health and /metrics?
+Answer:
+/health → Application status
+/metrics → Performance and usage statistics
+
+Q5. How do you secure actuator endpoints?
+Answer:
+By:
+Limiting exposed endpoints
+Enabling Spring Security
+Role-based access
+
+Q6. Can we create custom actuator endpoints?
+Answer:
+Yes, using @Endpoint, @ReadOperation, @WriteOperation.
+
+Tricky Interview Questions:
+❓ Why is Actuator dangerous in production?
+
+Answer:
+It can expose sensitive data like environment variables, heap dumps, and thread dumps if not secured.
+
+❓ Difference between @RestController and @Endpoint?
+Answer:
+@RestController → Business APIs
+@Endpoint → Management & monitoring APIs
+
+❓ Can Actuator work without Spring Security?
+Answer:
+Yes, but endpoints will be publicly accessible, which is risky.
+
+❓ What happens if DB is down?
+Answer:
+Health status becomes DOWN and can be used by load balancers to stop traffic.
+
+❓ Is Actuator synchronous or asynchronous?
+Answer:
+Endpoints are synchronous but metrics collection is optimized and lightweight.
+
+Final Interview Tip:
+Actuator is not just monitoring — it is your first line of defense in production debugging.
