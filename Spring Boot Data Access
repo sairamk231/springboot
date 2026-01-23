@@ -1,0 +1,584 @@
+8. Spring Boot Data Access – Spring Data JPA
+Spring Data JPA:
+Definition:
+Spring Data JPA is a part of the Spring Data family that simplifies data access using JPA by reducing boilerplate code for DAO layers.
+It sits on top of JPA implementations like Hibernate and provides:
+Repository abstractions
+Automatic query generation
+Pagination & sorting
+Auditing support
+
+Why Spring Data JPA?
+No need to write DAO implementations
+Less boilerplate (EntityManager, transactions)
+Clean, readable repository interfaces
+Easy integration with Spring Boot
+JPA & Hibernate Basics:
+JPA (Java Persistence API):
+Specification (interface-based)
+Defines how Java objects are mapped to database tables
+
+Example: @Entity, @Id, @OneToMany
+
+Hibernate:
+Implementation of JPA
+Handles actual ORM logic
+Generates SQL
+Manages caching, lazy loading, dirty checking
+
+📌 Spring Data JPA = JPA + Hibernate (default)
+
+Entity Mapping:
+@Entity:
+Marks a Java class as a persistent entity.
+
+@Entity
+public class Employee {
+}
+
+@Table:
+Maps entity to a specific DB table.
+
+@Entity
+@Table(name = "employees")
+public class Employee {
+}
+
+@Id:
+Defines primary key.
+
+@Id
+private Long id;
+
+@GeneratedValue:
+Auto-generates primary key.
+
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
+
+Complete Example:
+@Entity
+@Table(name = "employees")
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private double salary;
+}
+
+Output (DB Table):
+EMPLOYEES
+-----------------------
+id | name | salary
+1  | Sai  | 50000
+
+Relationships:
+1. One-to-One:
+Example:
+
+Person ↔ Passport
+
+@Entity
+public class Person {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @OneToOne
+    @JoinColumn(name = "passport_id")
+    private Passport passport;
+}
+
+@Entity
+public class Passport {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String passportNumber;
+}
+
+
+📌 JoinColumn creates FK in Person table
+
+2. One-to-Many:
+Example:
+Department → Employees
+
+@Entity
+public class Department {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String deptName;
+
+    @OneToMany(mappedBy = "department")
+    private List<Employee> employees;
+}
+
+@Entity
+public class Employee {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToOne
+    @JoinColumn(name = "dept_id")
+    private Department department;
+}
+
+
+📌 mappedBy avoids extra join table
+
+3. Many-to-Many:
+Example:
+
+Student ↔ Course
+
+@Entity
+public class Student {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToMany
+    @JoinTable(
+        name = "student_course",
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id")
+    )
+    private List<Course> courses;
+}
+
+@Entity
+public class Course {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String title;
+}
+
+
+📌 Join table is mandatory in Many-to-Many
+Fetch Types (Lazy vs Eager):
+LAZY (Default for collections):
+Data loaded only when accessed
+Better performance
+
+@OneToMany(fetch = FetchType.LAZY)
+EAGER:
+Data loaded immediately
+Can cause performance issues
+@ManyToOne(fetch = FetchType.EAGER)
+
+Interview Tip:
+Always prefer LAZY unless required
+
+Cascade Types:
+Purpose:
+Controls whether operations on parent propagate to child.
+
+Common Cascade Types:
+| Cascade Type | Meaning                      |
+| ------------ | ---------------------------- |
+| PERSIST      | Save child when parent saved |
+| MERGE        | Update child                 |
+| REMOVE       | Delete child                 |
+| ALL          | All operations               |
+
+Repository Interfaces:
+CrudRepository:
+
+Basic CRUD operations
+
+public interface EmployeeRepo 
+    extends CrudRepository<Employee, Long> {
+}
+
+JpaRepository:
+Extends CrudRepository
+Adds pagination, sorting, batch operations
+
+public interface EmployeeRepo 
+    extends JpaRepository<Employee, Long> {
+}
+
+
+📌 Always prefer JpaRepository
+
+Derived Query Methods:
+Example:
+List<Employee> findByName(String name);
+Employee findByNameAndSalary(String name, double salary);
+List<Employee> findBySalaryGreaterThan(double salary);
+
+Generated SQL:
+SELECT * FROM employees WHERE salary > ?
+
+JPQL:
+Definition:
+Object-oriented query language
+Uses entity names, not table names
+
+Example:
+@Query("SELECT e FROM Employee e WHERE e.salary > :salary")
+List<Employee> findHighPaid(@Param("salary") double salary);
+
+Key Point:
+📌 JPQL → converted to SQL by Hibernate
+
+Native Queries:
+Definition:
+Uses actual SQL
+Database-specific
+
+Example:
+@Query(
+  value = "SELECT * FROM employees WHERE salary > ?",
+  nativeQuery = true
+)
+List<Employee> getHighPaid(double salary);
+
+When to Use:
+Complex joins
+Performance tuning
+Vendor-specific features
+
+Pagination & Sorting:
+Pagination Example:
+Page<Employee> findAll(Pageable pageable);
+
+PageRequest page = PageRequest.of(0, 5);
+Page<Employee> result = repo.findAll(page);
+
+Output:
+Page 1
+5 records fetched
+
+Sorting Example:
+List<Employee> findAll(Sort.by("salary").descending());
+
+Interview Questions & Answers:
+Q1. Difference between CrudRepository and JpaRepository?
+
+Answer:
+CrudRepository → basic CRUD
+
+JpaRepository → pagination, sorting, batch operations
+📌 JpaRepository is preferred
+
+Q2. What is N+1 problem?
+Answer:
+When Hibernate fires one query for parent and N queries for child, causing performance issues.
+
+Solution:
+Use fetch join
+Change fetch type
+Use @EntityGraph
+
+Q3. Difference between JPQL and Native Query?
+| JPQL         | Native             |
+| ------------ | ------------------ |
+| Entity-based | Table-based        |
+| Portable     | DB-specific        |
+| Safer        | Faster (sometimes) |
+
+Q4. What happens if Lazy collection is accessed outside transaction?
+
+Answer:
+LazyInitializationException
+
+Q5. Why LAZY is default for OneToMany?
+
+Answer:
+To avoid loading large collections unnecessarily.
+
+Tricky Interview Questions:
+❓ What happens if both sides use CascadeType.ALL?
+👉 Can cause unexpected deletes
+
+❓ Can we use @Entity without @Table?
+👉 Yes, table name defaults to class name
+
+❓ Is Hibernate mandatory for Spring Data JPA?
+👉 No, but it’s the default implementation
+
+❓ Does Spring Data JPA create tables?
+👉 Yes, if ddl-auto is set (update, create)
+
+❓ Can we use Pageable with Native Query?
+👉 Yes, but countQuery is mandatory
+
+Key Points for Interview:
+
+✔ Prefer JpaRepository
+✔ Use LAZY fetching
+✔ Avoid CascadeType.ALL blindly
+✔ JPQL for portability
+✔ Native queries only when needed
+
+8(b). JDBC & Other Options
+JDBC:
+Definition:
+
+JDBC (Java Database Connectivity) is a low-level API provided by Java to interact with relational databases using SQL.
+
+JDBC Flow:
+Load Driver
+Create Connection
+Create Statement
+Execute Query
+Process ResultSet
+Close resources
+Drawback of Plain JDBC:
+Too much boilerplate code
+Manual resource management
+Error-prone
+Hard to maintain
+
+👉 Spring JDBC solves these issues
+
+Spring JDBC:
+Definition:
+
+Spring JDBC is a Spring abstraction over JDBC that:
+Eliminates boilerplate code
+Handles resource management
+Converts SQLExceptions to runtime exceptions
+
+📌 Still uses SQL, not ORM.
+
+Key Components:
+JdbcTemplate
+NamedParameterJdbcTemplate
+RowMapper
+DataSource
+
+When to Use Spring JDBC?
+
+✔ Simple queries
+✔ Performance-critical operations
+✔ Legacy databases
+✔ No complex relationships
+
+JdbcTemplate:
+Definition:
+
+JdbcTemplate is the core class in Spring JDBC that simplifies database access by handling:
+Connection creation
+Statement execution
+ResultSet processing
+Exception handling
+
+Configuration (Spring Boot):
+spring.datasource.url=jdbc:mysql://localhost:3306/testdb
+spring.datasource.username=root
+spring.datasource.password=pass
+
+Insert Example:
+@Autowired
+JdbcTemplate jdbcTemplate;
+
+public int saveEmployee() {
+    return jdbcTemplate.update(
+        "INSERT INTO employee(name, salary) VALUES (?, ?)",
+        "Sai", 50000
+    );
+}
+
+Output:
+1 row inserted
+
+Select Example:
+public List<Employee> getEmployees() {
+    return jdbcTemplate.query(
+        "SELECT * FROM employee",
+        (rs, rowNum) -> new Employee(
+            rs.getInt("id"),
+            rs.getString("name"),
+            rs.getDouble("salary")
+        )
+    );
+}
+
+Output:
+Employee{id=1, name='Sai', salary=50000}
+
+Advantages:
+
+✔ Less boilerplate
+✔ Better performance than ORM
+✔ Easy to understand SQL
+
+Limitations:
+
+❌ Manual SQL
+❌ No relationship handling
+❌ No caching / lazy loading
+
+NamedParameterJdbcTemplate:
+Definition:
+NamedParameterJdbcTemplate allows named parameters instead of ?, improving readability and maintainability.
+
+Why Needed?
+JdbcTemplate with many ? becomes unreadable and error-prone.
+
+Example:
+@Autowired
+NamedParameterJdbcTemplate namedJdbcTemplate;
+
+public List<Employee> getBySalary(double salary) {
+
+    String sql = "SELECT * FROM employee WHERE salary > :salary";
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("salary", salary);
+
+    return namedJdbcTemplate.query(sql, params,
+        (rs, rowNum) -> new Employee(
+            rs.getInt("id"),
+            rs.getString("name"),
+            rs.getDouble("salary")
+        )
+    );
+}
+
+Output:
+Employees with salary > 40000 fetched
+
+Advantages over JdbcTemplate:
+✔ Clear parameter names
+✔ Better for dynamic queries
+✔ Fewer bugs
+
+Comparison: JdbcTemplate vs NamedParameterJdbcTemplate:
+| Feature     | JdbcTemplate   | NamedParameterJdbcTemplate |
+| ----------- | -------------- | -------------------------- |
+| Parameters  | ? placeholders | Named parameters           |
+| Readability | Medium         | High                       |
+| Dynamic SQL | Hard           | Easy                       |
+| Performance | Same           | Same                       |
+
+MyBatis (Overview):
+Definition:
+
+MyBatis is a SQL-mapper framework that maps Java objects to SQL statements using XML or annotations.
+📌 It is not ORM like Hibernate.
+
+MyBatis Characteristics:
+Full control over SQL
+Lightweight
+No lazy loading by default
+No entity state management
+
+Architecture:
+Mapper Interface
+Mapper XML / Annotations
+SQL Sessions
+
+Example Mapper:
+@Mapper
+public interface EmployeeMapper {
+
+    @Select("SELECT * FROM employee WHERE id = #{id}")
+    Employee findById(int id);
+}
+
+MyBatis vs Spring JDBC:
+| Feature        | Spring JDBC | MyBatis   |
+| -------------- | ----------- | --------- |
+| SQL Control    | High        | Very High |
+| XML Support    | No          | Yes       |
+| Learning Curve | Low         | Medium    |
+| ORM Features   | No          | No        |
+
+| Feature       | MyBatis     | JPA                |
+| ------------- | ----------- | ------------------ |
+| SQL Control   | Full        | Limited            |
+| Performance   | High        | Slightly lower     |
+| Relationships | Manual      | Automatic          |
+| Use Case      | Complex SQL | Domain-driven apps |
+
+Interview Questions & Answers:
+Q1. When would you prefer Spring JDBC over JPA?
+
+Answer:
+
+Simple CRUD
+
+Performance-critical queries
+
+No complex relationships
+
+Legacy schemas
+
+Q2. Difference between JdbcTemplate and Hibernate?
+
+Answer:
+
+JdbcTemplate → SQL based
+
+Hibernate → ORM
+
+JdbcTemplate is faster for simple queries
+
+Q3. How does Spring JDBC handle exceptions?
+
+Answer:
+Converts checked SQLException into unchecked DataAccessException
+
+Q4. Does JdbcTemplate manage transactions?
+
+Answer:
+Yes, via Spring transaction management (@Transactional)
+
+Q5. Is MyBatis better than JPA?
+
+Answer:
+Depends on use case:
+
+Complex SQL → MyBatis
+
+Domain model & relationships → JPA
+
+Tricky Interview Questions:
+❓ Can JdbcTemplate cause SQL Injection?
+👉 No, if parameters are used properly
+
+❓ Does NamedParameterJdbcTemplate improve performance?
+👉 No, only improves readability
+
+❓ Can we use JdbcTemplate with stored procedures?
+👉 Yes, using CallableStatement
+
+❓ Is MyBatis ORM?
+👉 No, it’s a SQL mapper
+
+❓ Can Spring JDBC coexist with JPA?
+👉 Yes, commonly used together
+
+Key Points for Interviews:
+
+✔ Spring JDBC ≠ ORM
+✔ JdbcTemplate removes boilerplate
+✔ NamedParameterJdbcTemplate improves readability
+✔ MyBatis = full SQL control
+✔ Choose tool based on complexity & performance
