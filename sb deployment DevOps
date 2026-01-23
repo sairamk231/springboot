@@ -1,0 +1,294 @@
+1. Packaging (JAR vs WAR):
+Definition:
+Packaging refers to how a Spring Boot application is bundled for deployment.
+
+JAR (Java Archive):
+Definition:
+A self-contained executable file that includes:
+Application code
+Embedded server (Tomcat/Jetty/Undertow)
+Dependencies
+
+Used for:
+Microservices
+Cloud-native apps
+Docker & Kubernetes
+
+Command:
+java -jar app.jar
+WAR (Web Archive):
+
+Definition:
+A deployable file without embedded server, deployed to an external application server.
+
+Used for:
+Legacy systems
+Enterprise environments
+Shared servers
+
+Command:
+Deploy app.war to Tomcat/webapps
+
+Comparison Table:
+| Feature                | JAR    | WAR           |
+| ---------------------- | ------ | ------------- |
+| Embedded Server        | Yes    | No            |
+| External Server Needed | No     | Yes           |
+| Microservices          | Best   | Not Preferred |
+| Startup Speed          | Faster | Slower        |
+| Cloud Ready            | Yes    | Limited       |
+
+Example (pom.xml):
+
+JAR (default):
+
+<packaging>jar</packaging>
+
+
+WAR:
+
+<packaging>war</packaging>
+
+WAR Configuration:
+@SpringBootApplication
+public class App extends SpringBootServletInitializer {
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+        return builder.sources(App.class);
+    }
+}
+
+Output:
+Application deployed successfully
+Server started on port 8080
+
+Interview Questions:
+
+Q1: Why does Spring Boot prefer JAR over WAR?
+✅ Embedded server, faster startup, cloud-ready.
+
+Q2: Can a Spring Boot WAR contain embedded Tomcat?
+❌ No, embedded server must be excluded.
+
+Tricky Questions:
+
+Q: Can we run a WAR file using java -jar?
+❌ No, WAR needs an external container.
+
+2. External Server Deployment:
+Definition:
+
+Deploying a Spring application to external servers like:
+
+Apache Tomcat
+
+JBoss
+
+WebLogic
+
+Steps:
+
+Change packaging to WAR
+
+Exclude embedded Tomcat
+
+Extend SpringBootServletInitializer
+
+Deploy WAR to server
+
+Exclude Embedded Tomcat:
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-tomcat</artifactId>
+  <scope>provided</scope>
+</dependency>
+
+Output:
+INFO: Deploying web application archive
+INFO: Server startup in 5200 ms
+
+Interview Questions:
+
+Q: When do you prefer external server deployment?
+✅ Legacy enterprise systems, shared infra.
+
+Tricky Question:
+
+Q: What happens if you forget to mark Tomcat as provided?
+❌ App fails due to server conflict.
+
+3. Profiles for Environments:
+Definition:
+
+Spring Profiles allow different configurations for different environments.
+
+Common Profiles:
+
+dev
+
+test
+
+qa
+
+prod
+
+Configuration Files:
+application-dev.properties
+application-prod.properties
+
+Example:
+# application-dev.properties
+server.port=8081
+
+# application-prod.properties
+server.port=80
+
+Activate Profile:
+
+Command Line:
+
+java -jar app.jar --spring.profiles.active=prod
+
+
+application.properties:
+
+spring.profiles.active=dev
+
+Profile-based Bean:
+@Profile("dev")
+@Bean
+public DataSource devDataSource() { }
+
+Output:
+Active profiles: prod
+Server started on port 80
+
+Interview Questions:
+
+Q: Can multiple profiles be active at once?
+✅ Yes (dev,logging)
+
+Tricky Questions:
+
+Q: What happens if no profile is set?
+➡️ default profile is used.
+
+4. Dockerizing Spring Boot Application:
+Definition:
+
+Docker packages application + runtime into a container.
+
+Why Docker?
+
+Environment consistency
+
+Easy deployment
+
+Scalability
+
+Dockerfile Example:
+FROM openjdk:17-jdk-slim
+COPY target/app.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+
+Build Image:
+docker build -t springboot-app .
+
+Run Container:
+docker run -p 8080:8080 springboot-app
+
+Output:
+Tomcat started on port(s): 8080
+
+Interview Questions:
+
+Q: Why prefer Docker over VM?
+✅ Lightweight, faster, portable.
+
+Tricky Questions:
+
+Q: Does Docker replace Kubernetes?
+❌ Docker creates containers, Kubernetes manages them.
+
+5. Kubernetes (High-Level Overview):
+Definition:
+Kubernetes (K8s) is a container orchestration platform.
+
+Key Components:
+Pod
+Node
+Deployment
+Service
+ConfigMap
+Secret
+
+Basic Flow:
+Spring Boot App → Docker Image → Pod → Service → User
+
+Deployment YAML (Example):
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  replicas: 3
+
+Benefits:
+Auto-scaling
+Self-healing
+Load balancing
+
+Interview Questions:
+
+Q: What is a Pod?
+✅ Smallest deployable unit in K8s.
+
+Tricky Questions:
+
+Q: Can one pod have multiple containers?
+✅ Yes (sidecar pattern).
+
+6. CI/CD Integration Basics:
+Definition:
+
+CI/CD automates build, test, and deployment.
+
+CI (Continuous Integration):
+Code commit
+Build
+Test
+CD (Continuous Deployment):
+Deploy to server
+Rollback if failure
+
+Common Tools:
+Jenkins
+GitHub Actions
+GitLab CI
+Azure DevOps
+
+CI/CD Flow:
+Git Push → Build → Test → Docker Image → Deploy
+
+Sample Jenkins Stages:
+Checkout
+Maven Build
+Docker Build
+Deploy
+
+Interview Questions:
+
+Q: Why CI/CD is important?
+✅ Faster delivery, fewer bugs.
+
+Tricky Questions:
+
+Q: Difference between Continuous Delivery and Deployment?
+➡️ Delivery requires manual approval, Deployment is automatic.
+
+Final Interview Summary (Must Remember):
+JAR = Embedded server
+WAR = External server
+Profiles = Environment configs
+Docker = Containerization
+Kubernetes = Orchestration
+CI/CD = Automation
+
