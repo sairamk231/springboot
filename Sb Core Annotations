@@ -1,0 +1,254 @@
+Definition:
+@SpringBootApplication is a meta-annotation that marks the main class of a Spring Boot application.
+
+Internally Combines:
+@SpringBootConfiguration   // @Configuration
+@EnableAutoConfiguration
+@ComponentScan
+
+Why Used:
+Enables auto-configuration
+Scans components automatically
+Defines configuration class
+
+Example:
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+
+Output:
+Tomcat started on port(s): 8080
+Started DemoApplication in 3.2 seconds
+
+Interview Q&A:
+
+Q: Can we remove @EnableAutoConfiguration if using @SpringBootApplication?
+A: Yes, it is already included.
+
+Tricky Question:
+
+Q: Can we use @SpringBootApplication in multiple classes?
+A: ❌ No. Only one main configuration class.
+
+@EnableAutoConfiguration
+Definition:
+
+Automatically configures Spring Beans based on:
+Classpath dependencies
+Existing beans
+Properties
+
+How It Works:
+Reads spring.factories
+Uses conditional annotations (@ConditionalOnClass, etc.)
+
+Example:
+@EnableAutoConfiguration
+public class AppConfig {
+}
+
+Interview Q&A:
+
+Q: How does Spring Boot know which beans to auto-configure?
+A: Through classpath scanning + conditions.
+
+Tricky Question:
+
+Q: Can auto-configuration be disabled?
+A: ✅ Yes
+
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+
+@ComponentScan
+Definition:
+Scans packages to detect Spring components.
+
+Default Behavior:
+Scans current package + subpackages
+
+Example:
+@ComponentScan(basePackages = "com.app.service")
+
+Interview Q&A:
+Q: What happens if a bean is outside the scanned package?
+A: ❌ It won’t be registered.
+
+Tricky Question:
+Q: Does @SpringBootApplication do component scanning?
+A: ✅ Yes (internally).
+
+@Component, @Service, @Repository, @Controller
+Common Purpose:
+All are Spring-managed beans
+
+Differences:
+| Annotation  | Purpose                                |
+| ----------- | -------------------------------------- |
+| @Component  | Generic bean                           |
+| @Service    | Business logic                         |
+| @Repository | DAO layer (adds exception translation) |
+| @Controller | Web MVC controller                     |
+
+Example:
+@Component
+public class UtilityService { }
+
+@Service
+public class UserService { }
+
+@Repository
+public class UserRepository { }
+
+@Controller
+public class UserController { }
+
+Output:
+All beans loaded successfully
+
+Interview Q&A:
+
+Q: Difference between @Component and @Service?
+A: Functionally same, semantic meaning differs.
+
+Tricky Question:
+
+Q: Which annotation handles database exceptions?
+A: @Repository
+
+@Configuration & @Bean
+@Configuration
+
+Marks class as Java-based configuration.
+
+@Bean
+
+Creates and returns Spring Bean.
+
+Example:
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+
+Usage Output:
+RestTemplate bean created
+
+Interview Q&A:
+
+Q: Difference between @Component and @Configuration?
+A: @Configuration ensures singleton behavior using CGLIB.
+
+Tricky Question:
+
+Q: Can @Bean be used without @Configuration?
+A: ⚠️ Yes, but singleton behavior is lost.
+
+@Autowired, @Qualifier, @Primary
+@Autowired
+
+Injects dependency automatically.
+
+@Qualifier
+Resolves ambiguity when multiple beans exist.
+@Primary
+Marks default bean.
+
+Example:
+@Component
+class Car { }
+
+@Component
+@Primary
+class DieselCar extends Car { }
+
+@Component
+class PetrolCar extends Car { }
+
+@Autowired
+Car car;  // DieselCar injected
+
+Interview Q&A:
+
+Q: Which has higher priority – @Qualifier or @Primary?
+A: ✅ @Qualifier
+
+Tricky Question:
+
+Q: Is @Autowired mandatory?
+A: ❌ No (constructor injection works without it).
+
+@Value
+Definition:
+
+Injects value from:
+properties file
+environment
+SpEL
+
+Example:
+server.port=9090
+
+@Value("${server.port}")
+private int port;
+
+Output:
+Server running on port 9090
+
+Interview Q&A:
+
+Q: Can @Value inject expressions?
+A: ✅ Yes (SpEL)
+
+Tricky Question:
+
+Q: What happens if property is missing?
+A: ❌ Application fails unless default provided.
+
+@Profile
+Definition:
+
+Loads beans based on active environment.
+
+Example:
+@Profile("dev")
+@Component
+public class DevConfig { }
+
+spring.profiles.active=dev
+
+Output:
+DevConfig loaded
+
+Interview Q&A:
+
+Q: Can multiple profiles be active?
+A: ✅ Yes (comma-separated)
+
+Tricky Question:
+
+Q: What if no profile is active?
+A: Beans without @Profile load by default.
+
+🔥 Tricky Interview Questions (Rapid Fire)
+
+Why constructor injection is preferred?
+→ Immutable, testable, avoids null issues
+
+Difference between @Controller and @RestController?
+→ @RestController = @Controller + @ResponseBody
+
+Can Spring Boot work without application.properties?
+→ ✅ Yes (uses defaults)
+
+What happens if two beans have same name?
+→ ❌ BeanDefinitionOverrideException
+
+Does @ComponentScan scan JAR dependencies?
+→ ❌ Only specified packages
