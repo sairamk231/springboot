@@ -1,0 +1,311 @@
+14. Spring Boot Microservices (Basics)
+1. Monolithic vs Microservices
+Monolithic Architecture:
+
+Definition:
+All application modules (UI, business logic, DB access) are built, deployed, and scaled as one single unit.
+
+Characteristics:
+Single codebase
+Single deployment
+Tight coupling
+One DB usually
+
+Example:
+A single Spring Boot app handling:
+
+User
+Order
+Payment
+
+Problems:
+Difficult to scale individual modules
+Any small change requires full redeployment
+Slower development as app grows
+Microservices Architecture:
+
+Definition:
+Application is split into small, independent services, each responsible for one business capability.
+
+Characteristics:
+Independent deployment
+Loosely coupled
+Each service has its own DB
+
+Communicate via REST / messaging
+
+Example:
+User Service
+Order Service
+Payment Service
+
+Comparison Table:
+| Feature        | Monolithic | Microservices |
+| -------------- | ---------- | ------------- |
+| Deployment     | Single     | Independent   |
+| Scalability    | Entire app | Per service   |
+| Failure Impact | Whole app  | Isolated      |
+| Technology     | One stack  | Polyglot      |
+| Dev Speed      | Slower     | Faster        |
+
+Interview Question:
+
+Q: Why microservices are preferred over monolithic?
+A: They provide better scalability, fault isolation, faster deployments, and allow teams to work independently.
+
+Tricky Question:
+
+Q: Is microservices always better than monolithic?
+A: ❌ No. For small applications, monolithic is simpler and faster. Microservices add complexity like networking, monitoring, and deployment overhead.
+
+2. REST Communication in Microservices
+Definition:
+
+Microservices communicate with each other using REST APIs over HTTP.
+
+Common HTTP methods:
+
+GET – Read
+
+POST – Create
+
+PUT – Update
+
+DELETE – Delete
+
+Example: Order Service calling User Service
+User Controller
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable int id) {
+        return new User(id, "Sai Ram");
+    }
+}
+
+Sample Response (JSON):
+{
+  "id": 1,
+  "name": "Sai Ram"
+}
+
+Interview Question:
+
+Q: Why REST is widely used in microservices?
+A: It is lightweight, language-independent, stateless, and easy to consume.
+
+Tricky Question:
+
+Q: Can microservices communicate without REST?
+A: ✅ Yes. They can use messaging (Kafka, RabbitMQ) or gRPC.
+
+3. Feign Client
+Definition:
+
+Feign is a declarative REST client that simplifies HTTP calls between microservices.
+
+Dependency:
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+
+Enable Feign:
+@EnableFeignClients
+@SpringBootApplication
+public class OrderServiceApplication {
+}
+
+Feign Client Interface:
+@FeignClient(name = "USER-SERVICE")
+public interface UserClient {
+
+    @GetMapping("/users/{id}")
+    User getUser(@PathVariable int id);
+}
+
+Using Feign in Service:
+@Service
+public class OrderService {
+
+    @Autowired
+    private UserClient userClient;
+
+    public User fetchUser(int id) {
+        return userClient.getUser(id);
+    }
+}
+
+Output:
+Feign automatically calls User Service and returns response.
+
+Interview Question:
+
+Q: Advantage of Feign over RestTemplate?
+A: Feign reduces boilerplate code and integrates well with service discovery and load balancing.
+
+Tricky Question:
+
+Q: Is Feign synchronous or asynchronous?
+A: By default, synchronous.
+
+4. RestTemplate / WebClient
+RestTemplate:
+
+Definition:
+Synchronous HTTP client (older approach).
+
+RestTemplate restTemplate = new RestTemplate();
+User user = restTemplate.getForObject(
+    "http://USER-SERVICE/users/1", User.class);
+
+WebClient:
+
+Definition:
+Non-blocking, reactive HTTP client (recommended).
+
+WebClient webClient = WebClient.create();
+
+User user = webClient.get()
+        .uri("http://USER-SERVICE/users/1")
+        .retrieve()
+        .bodyToMono(User.class)
+        .block();
+
+Comparison:
+| Feature     | RestTemplate | WebClient    |
+| ----------- | ------------ | ------------ |
+| Nature      | Blocking     | Non-blocking |
+| Performance | Lower        | Higher       |
+| Status      | Deprecated   | Recommended  |
+
+Interview Question:
+
+Q: Why WebClient is preferred?
+A: It supports reactive programming and handles high concurrency efficiently.
+
+Tricky Question:
+
+Q: Is RestTemplate removed?
+A: ❌ No, but deprecated and not recommended for new applications.
+
+5. Service Discovery (Eureka – Overview)
+Problem:
+
+Microservices have dynamic IPs, so hardcoding URLs is not feasible.
+
+Solution: Eureka
+Services register themselves
+Other services discover them dynamically
+
+Flow:
+Service registers with Eureka Server
+Eureka maintains service registry
+Clients query Eureka to locate services
+
+Interview Question:
+
+Q: Why service discovery is needed?
+A: To avoid hardcoded service URLs and support dynamic scaling.
+
+Tricky Question:
+
+Q: Can microservices work without Eureka?
+A: ✅ Yes, but you must manage service URLs manually or use DNS-based discovery.
+
+6. API Gateway (Overview)
+Definition:
+Single entry point for all client requests.
+
+Responsibilities:
+
+Routing
+Authentication
+Rate limiting
+Load balancing
+
+Example Flow:
+Client → API Gateway → Order Service → User Service
+
+Interview Question:
+
+Q: Why API Gateway is required?
+A: It centralizes cross-cutting concerns and hides internal microservices from clients.
+
+Tricky Question:
+
+Q: Can clients call microservices directly?
+A: Technically yes, but not recommended due to security and maintainability issues.
+
+7. Circuit Breaker (Resilience4j)
+Problem:
+If one service is down, repeated calls can crash the system.
+
+Solution: Circuit Breaker
+Stops calling a failing service temporarily.
+
+States:
+CLOSED – Normal
+OPEN – Calls blocked
+HALF-OPEN – Trial calls
+
+Dependency:
+<dependency>
+  <groupId>io.github.resilience4j</groupId>
+  <artifactId>resilience4j-spring-boot2</artifactId>
+</dependency>
+
+Example:
+@CircuitBreaker(name = "userService", fallbackMethod = "fallbackUser")
+public User getUser(int id) {
+    return userClient.getUser(id);
+}
+
+public User fallbackUser(int id, Exception e) {
+    return new User(id, "Default User");
+}
+
+Output:
+If User Service fails → fallback response returned.
+
+Interview Question:
+Q: Why circuit breaker is important?
+A: It prevents cascading failures.
+
+Tricky Question:
+Q: Difference between timeout and circuit breaker?
+A: Timeout waits; circuit breaker stops calling the service completely.
+
+8. Distributed Tracing (Basics)
+Definition:
+Tracking a request across multiple microservices.
+
+Why needed?
+Debug latency issues
+Trace failures across services
+
+Trace Identifiers:
+Trace ID
+Span ID
+
+Example Flow:
+Client → Gateway → Order → Payment → Inventory
+
+Same Trace ID flows through all services.
+
+Interview Question:
+Q: What problem does distributed tracing solve?
+A: Identifies performance bottlenecks and failures in microservices.
+
+Tricky Question:
+Q: Can logging alone replace tracing?
+A: ❌ No. Logs don’t provide end-to-end request visibility.
+
+🔥 Final Interview Tips (4+ Years):
+Always explain why microservices are used
+Mention fault tolerance + scalability
+Talk about real-world failures
+Compare Feign vs WebClient
+Explain Eureka + Gateway + Circuit Breaker together
