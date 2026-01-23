@@ -1,0 +1,238 @@
+12. Logging in Spring Boot
+Logging Framework Overview:
+Definition:
+Logging is the process of recording application events (info, warnings, errors, debug details) to help in monitoring, debugging, auditing, and troubleshooting applications.
+Spring Boot provides built-in logging support and auto-configures a logging framework so you can start logging without any setup.
+
+Popular Java Logging Frameworks:
+| Framework               | Purpose                               |
+| ----------------------- | ------------------------------------- |
+| **SLF4J**               | Logging **facade** (API only)         |
+| **Logback**             | Default implementation in Spring Boot |
+| **Log4j2**              | High-performance logging framework    |
+| java.util.logging (JUL) | Java built-in logging                 |
+
+Spring Boot Logging Architecture:
+Application Code
+      ↓
+   SLF4J API
+      ↓
+Logging Implementation (Logback / Log4j2)
+
+
+👉 Spring Boot always uses SLF4J as abstraction.
+
+Logback (Default in Spring Boot):
+Definition:
+
+Logback is the default logging implementation in Spring Boot.
+It is:
+
+Faster than Log4j
+
+Native SLF4J support
+
+Auto-configured by Spring Boot
+
+Default Dependencies:
+
+Included automatically via:
+
+spring-boot-starter-logging
+
+Basic Logging Example:
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@RestController
+public class TestController {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(TestController.class);
+
+    @GetMapping("/test")
+    public String test() {
+        logger.info("Inside test API");
+        logger.debug("Debug message");
+        logger.error("Error occurred");
+        return "OK";
+    }
+}
+
+Default Output (Console):
+INFO  c.example.TestController - Inside test API
+ERROR c.example.TestController - Error occurred
+
+
+⚠️ DEBUG not shown by default.
+
+Log4j2 Integration:
+Why Log4j2?
+
+Better performance
+
+Asynchronous logging
+
+Advanced rolling policies
+
+Steps to Use Log4j2 in Spring Boot:
+Step 1: Exclude Logback
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-web</artifactId>
+  <exclusions>
+    <exclusion>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-logging</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+
+Step 2: Add Log4j2 Dependency
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-log4j2</artifactId>
+</dependency>
+
+Step 3: Create log4j2.xml
+<Configuration>
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d [%t] %-5level %logger - %msg%n"/>
+    </Console>
+  </Appenders>
+
+  <Loggers>
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>
+
+Output:
+2026-01-23 [http-nio-8080-exec-1] INFO TestController - Inside test API
+
+Logging Levels:
+Levels Hierarchy:
+TRACE
+DEBUG
+INFO
+WARN
+ERROR
+
+Meaning:
+| Level | Purpose              |
+| ----- | -------------------- |
+| TRACE | Very detailed        |
+| DEBUG | Debugging            |
+| INFO  | Application flow     |
+| WARN  | Unexpected situation |
+| ERROR | Failure / Exception  |
+
+Set Logging Level:
+logging.level.root=INFO
+logging.level.com.example=DEBUG
+
+Output:
+DEBUG com.example.TestController - Debug message
+INFO  com.example.TestController - Inside test API
+
+Custom Log Configuration:
+Using application.properties:
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} %-5level %logger - %msg%n
+
+Using logback-spring.xml:
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d %-5level %logger - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>
+
+Log Files & Rolling Policies:
+Enable File Logging:
+logging.file.name=app.log
+
+Rolling Policy Example (Logback):
+<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <file>app.log</file>
+
+  <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+    <fileNamePattern>app-%d{yyyy-MM-dd}.log</fileNamePattern>
+    <maxHistory>7</maxHistory>
+  </rollingPolicy>
+
+  <encoder>
+    <pattern>%d %-5level %logger - %msg%n</pattern>
+  </encoder>
+</appender>
+
+Resulting Files:
+app-2026-01-20.log
+app-2026-01-21.log
+app-2026-01-22.log
+
+Interview Questions & Answers:
+Q1: Why does Spring Boot use SLF4J?
+Answer:
+SLF4J is a logging facade that allows switching logging frameworks without changing code.
+
+Q2: Default logging framework in Spring Boot?
+Answer:
+Logback.
+
+Q3: How to change logging level at runtime?
+Answer:
+Using logging.level.package=LEVEL in application.properties.
+
+Q4: Difference between Logback and Log4j2?
+| Logback             | Log4j2           |
+| ------------------- | ---------------- |
+| Default             | Optional         |
+| Simple              | High performance |
+| No async by default | Async logging    |
+
+Q5: Where are logs stored by default?
+
+Answer:
+Console (STDOUT).
+
+Tricky Interview Questions:
+Q1: What happens if both Logback and Log4j2 are present?
+
+Answer:
+Spring Boot prefers Logback → may cause conflicts.
+
+Q2: Is logging synchronous or asynchronous?
+
+Answer:
+Default is synchronous. Async requires configuration.
+
+Q3: Why use logback-spring.xml instead of logback.xml?
+
+Answer:
+logback-spring.xml supports Spring profiles and placeholders.
+
+Q4: Does logging affect application performance?
+
+Answer:
+Yes — excessive logging (DEBUG/TRACE) can slow applications.
+
+Q5: Can logging be disabled completely?
+
+Answer:
+Yes:
+
+logging.level.root=OFF
+
+Key Points (For Interview):
+Spring Boot → SLF4J + Logback
+Log4j2 for high-performance systems
+Logging levels hierarchy matters
+File rolling is mandatory in production
+Avoid DEBUG in production
