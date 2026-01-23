@@ -1,0 +1,241 @@
+1. Spring Boot Fundamentals – Complete Interview Notes
+1. What is Spring Boot?
+Spring Boot is a framework built on top of Spring Framework that simplifies the development of standalone, production-ready Spring applications with minimal configuration.
+
+Interview one-liner
+“Spring Boot simplifies Spring application development by providing auto-configuration, embedded servers, and opinionated defaults.”
+
+2. Problems with Traditional Spring (Why Spring Boot Came)
+Traditional Spring Issues ❌
+
+Too much XML configuration
+Manual dependency management
+Boilerplate code
+External server setup (Tomcat, Jetty)
+Complex project setup
+Steep learning curve
+
+Example (Traditional Spring XML)
+<bean id="userService" class="com.app.UserService">
+    <property name="repo" ref="userRepo"/>
+</bean>
+
+
+👉 Too verbose, error-prone, and hard to maintain.
+3. How Spring Boot Solves These Problems ✅
+| Traditional Spring | Spring Boot        |
+| ------------------ | ------------------ |
+| XML config         | Java + annotations |
+| Manual setup       | Auto-configuration |
+| External server    | Embedded server    |
+| Long setup time    | Ready in minutes   |
+| Boilerplate        | Convention-based   |
+
+4. Key Features of Spring Boot (🔥 MUST KNOW)
+4.1 Auto-Configuration
+
+Automatically configures beans based on:
+Classpath dependencies
+Application properties
+Environment
+
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+
+✔ No explicit configuration
+✔ Smart defaults
+
+4.2 Starter Dependencies
+Predefined dependency bundles.
+spring-boot-starter-web
+
+Includes:
+Spring MVC
+Embedded Tomcat
+Jackson
+Validation
+
+4.3 Embedded Servers
+Tomcat (default)
+Jetty
+Undertow
+java -jar app.jar
+
+✔ No WAR
+✔ No external deployment
+
+4.4 Production-Ready Features
+
+Using Actuator:
+Health
+Metrics
+Monitoring
+
+4.5 Externalized Configuration
+server.port=8081
+spring.application.name=demo-app
+
+✔ Same code → different environments
+
+5. Spring vs Spring MVC vs Spring Boot (🔥 Interview Favorite)
+| Feature     | Spring        | Spring MVC | Spring Boot |
+| ----------- | ------------- | ---------- | ----------- |
+| Type        | Framework     | Web module | Framework   |
+| Purpose     | Core features | Web apps   | Rapid dev   |
+| Config      | Heavy         | Medium     | Minimal     |
+| Server      | External      | External   | Embedded    |
+| Auto-config | ❌             | ❌          | ✅           |
+
+Interview one-liner
+“Spring MVC is part of Spring; Spring Boot sits on top of Spring to simplify configuration.”
+
+6. Opinionated Defaults (🔥 Very Important)
+What does “Opinionated” mean?
+Spring Boot makes decisions for you based on best practices.
+
+Examples:
+Uses Tomcat as default server
+Uses Jackson for JSON
+Uses HikariCP for connection pool
+Uses application.properties for config
+
+👉 You can override defaults if needed.
+
+7. Convention over Configuration
+Meaning
+Follow standard conventions instead of writing explicit configuration.
+Example
+
+If you add:
+spring-boot-starter-web
+Spring Boot automatically:
+Enables Spring MVC
+Registers DispatcherServlet
+Configures Jackson
+Starts Tomcat
+
+✔ Less code
+✔ Faster development
+
+8. Simple Spring Boot Example (With Output)
+Controller
+@RestController
+public class HelloController {
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello Spring Boot";
+    }
+}
+
+Output (Browser / Postman)
+Hello Spring Boot
+
+✔ No XML
+✔ No servlet config
+✔ No dispatcher setup
+
+9. Spring Boot Application Startup Flow (🔥)
+main() method runs
+SpringApplication.run()
+ApplicationContext created
+Auto-configuration applied
+Beans created
+Embedded server started
+
+10. Advantages of Spring Boot
+
+✔ Rapid development
+✔ Minimal configuration
+✔ Microservices friendly
+✔ Embedded servers
+✔ Easy testing
+✔ Cloud-ready
+
+11. Limitations of Spring Boot (Interview Honesty)
+
+❌ Less control due to auto-configuration
+❌ Opinionated defaults may not fit all cases
+❌ Debugging auto-config can be tricky
+❌ Not ideal for extremely low-level frameworks
+
+Good interview answer
+“Spring Boot trades fine-grained control for developer productivity.”
+
+12. Common Interview Questions & Answers
+Q1. What is Spring Boot?
+Spring Boot is a framework that simplifies Spring application development using auto-configuration and embedded servers.
+
+Q2. How does Spring Boot reduce configuration?
+By using:
+Auto-configuration
+Starter dependencies
+Convention over configuration
+
+Q3. What is @SpringBootApplication?
+
+Combination of:
+@Configuration
+@EnableAutoConfiguration
+@ComponentScan
+
+Q4. Can we disable auto-configuration?
+✅ Yes
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+
+Q5. Is Spring Boot suitable for large applications?
+✅ Yes — widely used in enterprise & microservices
+
+13. Tricky Interview Questions (🔥 4+ Years Level)
+❓ Is Spring Boot replacing Spring?
+❌ No
+✔ Spring Boot uses Spring internally
+
+❓ Is Spring Boot only for microservices?
+❌ No
+✔ Can be monolith or microservice
+
+❓ Does Spring Boot require XML?
+❌ No (but can use if needed)
+
+❓ Can we deploy Spring Boot as WAR?
+✅ Yes (but JAR is preferred)
+
+❓ Does Spring Boot remove the need for Spring MVC?
+❌ No
+✔ It configures Spring MVC automatically
+
+❓ How does Spring Boot know what to auto-configure?
+✔ Uses:
+spring.factories
+Classpath scanning
+Conditional annotations
+
+14. Real-World Usage (Spring Boot + OOPS)
+@RestController
+class OrderController {
+
+    private final OrderService service;
+
+    OrderController(OrderService service) {
+        this.service = service;
+    }
+}
+
+✔ IoC
+✔ DI
+✔ Loose coupling
+
+15. Interview One-Liners (Use These)
+“Spring Boot simplifies Spring development.”
+“Auto-configuration is the heart of Spring Boot.”
+“Starter dependencies reduce dependency clutter.”
+“Spring Boot favors convention over configuration.”
+“Spring Boot enables production-ready apps quickly.”
+
+16. Interview Closing Statement (Strong Answer)
+“Spring Boot sits on top of Spring Framework and removes boilerplate by using auto-configuration, opinionated defaults, and embedded servers, making it ideal for modern enterprise and microservice applications.”
