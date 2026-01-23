@@ -1,0 +1,263 @@
+7. Validation & Exception Handling
+Bean Validation (JSR-380):
+Definition:
+
+Bean Validation JSR-380 is a Java standard for validating object fields using annotations.
+In Spring Boot, it is implemented using Hibernate Validator.
+
+Earlier version: JSR-303
+Current version: JSR-380 (Java 8+)
+
+Why it is used:
+Avoid manual if-else validation
+Centralized, reusable validations
+Automatic request validation
+Clean & readable code
+
+Dependency (Spring Boot):
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+
+Validation Annotations:
+Common Annotations:
+Annotation	Description
+@NotNull	Value must not be null
+@NotEmpty	Not null & not empty (String, Collection)
+@NotBlank	Not null & trimmed length > 0
+@Size	Min & max length
+@Min / @Max	Numeric range
+@Positive	> 0
+@Email	Valid email format
+@Pattern	Regex validation
+@Past / @Future	Date validation
+Example: DTO Validation
+public class UserRequest {
+
+    @NotBlank(message = "Name is mandatory")
+    private String name;
+
+    @Email(message = "Invalid email format")
+    private String email;
+
+    @Size(min = 10, max = 10, message = "Mobile must be 10 digits")
+    private String mobile;
+}
+
+@Valid vs @Validated:
+@Valid:
+
+Standard Java annotation
+Used for simple validation
+No group support
+
+@PostMapping("/users")
+public ResponseEntity<String> createUser(@Valid @RequestBody UserRequest request) {
+    return ResponseEntity.ok("User Created");
+}
+
+@Validated:
+Spring-specific
+Supports validation groups
+Can be used at class level
+
+@Validated
+@RestController
+public class UserController {
+}
+
+Validation Groups Example:
+public interface Create {}
+public interface Update {}
+
+@NotNull(groups = Update.class)
+private Long id;
+
+Difference Summary:
+| Feature | @Valid    | @Validated   |
+| ------- | --------- | ------------ |
+| Origin  | Java      | Spring       |
+| Groups  | ❌         | ✅            |
+| Level   | Parameter | Class/Method |
+
+Global Exception Handling:
+Why needed:
+
+Centralized exception handling
+
+Clean controllers
+
+Consistent API error response
+
+Avoid duplicate try-catch
+
+@ExceptionHandler:
+Definition:
+
+Handles specific exceptions inside a controller.
+
+Example:
+@ExceptionHandler(NullPointerException.class)
+public ResponseEntity<String> handleNPE(NullPointerException ex) {
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                         .body("Null value occurred");
+}
+
+
+⚠️ Limitation:
+Only works inside the same controller
+
+@ControllerAdvice / @RestControllerAdvice:
+Definition:
+
+Global exception handler for all controllers
+
+@ControllerAdvice → MVC (Views)
+
+@RestControllerAdvice → REST APIs (@ResponseBody included)
+
+Example:
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> errors = new HashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+            errors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        return ResponseEntity.badRequest().body(errors);
+    }
+}
+
+Output (Validation Failure):
+{
+  "name": "Name is mandatory",
+  "email": "Invalid email format"
+}
+
+Custom Exceptions:
+Why Custom Exceptions:
+
+Business-specific errors
+
+Better readability
+
+Clear error handling
+
+Example:
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(String message) {
+        super(message);
+    }
+}
+
+Throwing Custom Exception:
+if(user == null) {
+    throw new UserNotFoundException("User not found with id " + id);
+}
+
+Handling Custom Exception:
+@ExceptionHandler(UserNotFoundException.class)
+public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                         .body(ex.getMessage());
+}
+
+Error Response Standardization:
+Why Standardize Errors:
+
+Frontend consistency
+
+Easy debugging
+
+Better API contracts
+
+Standard Error Response DTO:
+public class ErrorResponse {
+    private int status;
+    private String message;
+    private LocalDateTime timestamp;
+}
+
+Standardized Response Example:
+@ExceptionHandler(Exception.class)
+public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
+
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+    );
+
+    return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+}
+
+Output:
+{
+  "status": 500,
+  "message": "Internal Server Error",
+  "timestamp": "2026-01-23T09:45:00"
+}
+
+Interview Questions & Answers:
+Q1: What is Bean Validation?
+
+Answer:
+Bean Validation (JSR-380) is a Java specification that provides annotations to validate Java objects declaratively.
+
+Q2: Difference between @NotNull, @NotEmpty, @NotBlank?
+
+Answer:
+@NotNull → value not null
+@NotEmpty → not null + not empty
+@NotBlank → not null + trimmed length > 0
+
+Q3: Difference between @Valid and @Validated?
+Answer:
+@Validated supports validation groups and is Spring-specific, whereas @Valid is standard Java without group support.
+
+Q4: What exception is thrown when validation fails?
+Answer:
+MethodArgumentNotValidException
+
+Q5: Why use @RestControllerAdvice instead of @ControllerAdvice?
+Answer:
+@RestControllerAdvice automatically returns JSON responses using @ResponseBody.
+
+Q6: Can we have multiple @ControllerAdvice?
+Answer:
+Yes, and we can control execution order using @Order.
+
+Tricky Interview Questions:
+Q1: Will validation work without @Valid?
+❌ No — validation annotations are ignored without @Valid / @Validated.
+
+Q2: Does @ExceptionHandler work for all controllers?
+❌ No — only for the same controller unless used with @ControllerAdvice.
+
+Q3: What happens if both @ExceptionHandler and @ControllerAdvice exist?
+✅ Controller-level @ExceptionHandler has higher priority.
+
+Q4: Can validation be applied to path variables?
+✅ Yes
+@GetMapping("/users/{id}")
+public User getUser(@PathVariable @Min(1) Long id) { }
+
+Q5: Is Bean Validation executed before controller logic?
+✅ Yes — validation happens before method execution.
+
+Q6: Can we customize validation messages globally?
+✅ Yes — using messages.properties
+
+Best Practices:
+Use DTOs for validation (not entities)
+Always standardize error responses
+Use @RestControllerAdvice
+Prefer custom exceptions for business logic
+Avoid try-catch in controllers
