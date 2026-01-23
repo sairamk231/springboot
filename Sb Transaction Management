@@ -1,0 +1,285 @@
+What is Transaction Management?
+
+Definition:
+Transaction Management ensures that a set of database operations are executed as a single unit of work following ACID properties.
+
+ACID:
+
+Atomicity – All or nothing
+
+Consistency – DB remains valid
+
+Isolation – Concurrent safety
+
+Durability – Data persists after commit
+
+@Transactional Annotation
+Definition:
+
+@Transactional is used to define transaction boundaries declaratively in Spring.
+
+Where It Can Be Used:
+
+Class level
+
+Method level (preferred)
+
+Example:
+@Service
+public class OrderService {
+
+    @Transactional
+    public void placeOrder() {
+        System.out.println("Order placed");
+    }
+}
+
+How @Transactional Works Internally (Interview Gold)
+
+Uses AOP proxy
+
+Opens transaction before method
+
+Commits on successful completion
+
+Rolls back on unchecked exception
+
+👉 Default rollback: RuntimeException & Error
+
+Propagation Types
+Definition:
+
+Propagation defines how transactions behave when one transactional method calls another.
+
+Propagation Types Table
+| Type          | Description                           |
+| ------------- | ------------------------------------- |
+| REQUIRED      | Join existing or create new (default) |
+| REQUIRES_NEW  | Always create new transaction         |
+| SUPPORTS      | Join if exists                        |
+| NOT_SUPPORTED | Execute without transaction           |
+| MANDATORY     | Must have existing transaction        |
+| NEVER         | Must not have transaction             |
+| NESTED        | Savepoint based                       |
+
+Example: REQUIRED (Default)
+@Transactional(propagation = Propagation.REQUIRED)
+public void methodA() {
+    methodB();
+}
+
+
+Behavior:
+
+One single transaction shared
+
+Example: REQUIRES_NEW
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void logAudit() {
+    // independent transaction
+}
+
+
+Use Case:
+Audit logging
+Notification services
+
+NESTED (Tricky & Rare)
+@Transactional(propagation = Propagation.NESTED)
+
+Uses savepoints
+Inner rollback doesn’t affect outer transaction
+Works only with JDBC (not JPA default)
+
+Isolation Levels
+Definition:
+Isolation defines how visible data changes are between concurrent transactions.
+
+Problems Solved:
+Dirty Read
+Non-Repeatable Read
+Phantom Read
+Isolation Levels Table
+
+| Level            | Prevents               |
+| ---------------- | ---------------------- |
+| READ_UNCOMMITTED | Nothing                |
+| READ_COMMITTED   | Dirty Reads            |
+| REPEATABLE_READ  | Dirty + Non-repeatable |
+| SERIALIZABLE     | All problems           |
+
+Example:
+@Transactional(isolation = Isolation.READ_COMMITTED)
+public void updateBalance() {
+    // business logic
+}
+
+Interview Tip:
+
+Default isolation → Database dependent
+(MySQL → READ_COMMITTED)
+
+Rollback Rules
+Default Behavior:
+| Exception Type    | Rollback |
+| ----------------- | -------- |
+| RuntimeException  | ✅ Yes    |
+| Error             | ✅ Yes    |
+| Checked Exception | ❌ No     |
+
+Force Rollback for Checked Exception
+@Transactional(rollbackFor = Exception.class)
+public void saveData() throws Exception {
+    throw new Exception("Checked exception");
+}
+
+Prevent Rollback for Runtime Exception
+@Transactional(noRollbackFor = NullPointerException.class)
+
+Output Example:
+Exception thrown
+Transaction rolled back
+
+(or committed if excluded)
+
+Common Transaction Issues (Very Important)
+1. Self Invocation (Most Tricky)
+public void methodA() {
+    methodB(); // @Transactional ignored
+}
+
+
+❌ Transaction won’t work
+✔️ Because proxy is bypassed
+
+Solution:
+Call from another bean
+Or use ApplicationContext
+
+2. @Transactional on Private Methods
+
+❌ Won’t work
+✔️ Must be public
+
+3. Wrong Propagation Usage
+Using REQUIRED instead of REQUIRES_NEW
+Causes unexpected rollback
+
+4. Exception Swallowed
+try {
+   riskyCode();
+} catch(Exception e) {
+   // swallowed
+}
+
+
+❌ No rollback triggered
+
+Declarative vs Programmatic Transactions
+Declarative Transaction Management
+
+Uses @Transactional
+Clean & readable
+Preferred in real projects
+
+Example:
+
+@Transactional
+public void process() {}
+
+Programmatic Transaction Management
+Uses TransactionTemplate or PlatformTransactionManager
+More control
+More boilerplate
+
+Example:
+
+transactionTemplate.execute(status -> {
+    // business logic
+    return null;
+});
+
+Comparison Table
+| Declarative      | Programmatic |
+| ---------------- | ------------ |
+| Easy             | Complex      |
+| Annotation-based | Code-based   |
+| Less control     | Full control |
+| Most used        | Rare         |
+
+Complete Real-Time Example
+@Service
+public class BankService {
+
+    @Transactional
+    public void transfer() {
+        withdraw();
+        deposit();
+    }
+
+    public void withdraw() {
+        System.out.println("Amount withdrawn");
+    }
+
+    public void deposit() {
+        System.out.println("Amount deposited");
+    }
+}
+
+Output (Success):
+Amount withdrawn
+Amount deposited
+Transaction committed
+
+Output (Exception):
+Amount withdrawn
+Exception occurred
+Transaction rolled back
+
+INTERVIEW QUESTIONS & ANSWERS
+Basic Questions
+Q1. What is @Transactional?
+A:
+It defines transactional boundaries declaratively using Spring AOP.
+
+Q2. Default propagation and isolation?
+A:
+Propagation → REQUIRED
+Isolation → Database default
+
+Q3. Which exceptions cause rollback by default?
+A:
+Unchecked exceptions (RuntimeException).
+
+Advanced Questions
+Q4. Difference between REQUIRED and REQUIRES_NEW?
+A:
+REQUIRED shares transaction; REQUIRES_NEW creates a new one.
+
+Q5. Why @Transactional doesn’t work in same class method call?
+A:
+Because Spring uses proxy-based AOP and self-invocation bypasses proxy.
+
+Q6. Can @Transactional be used at class level?
+A:
+Yes, but method-level overrides it.
+
+TRICKY INTERVIEW QUESTIONS (🔥 MUST READ)
+Q7. Will @Transactional work on private method?
+❌ No
+
+Q8. Will checked exception rollback transaction?
+❌ No (unless configured)
+
+Q9. What happens if inner REQUIRED method fails?
+✅ Entire transaction rolls back
+
+Q10. Difference between NESTED and REQUIRES_NEW?
+| NESTED              | REQUIRES_NEW             |
+| ------------------- | ------------------------ |
+| Savepoint based     | New physical transaction |
+| Inner rollback safe | Independent commit       |
+| JDBC only           | Any                      |
+
+One-Line Interview Summary (🔥 Use This)
+Spring transaction management ensures data consistency using declarative @Transactional support with configurable propagation, isolation, and rollback rules implemented via AOP proxies.
