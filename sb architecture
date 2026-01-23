@@ -1,0 +1,255 @@
+Definition:
+Spring Boot Architecture defines how Spring Boot applications are structured internally to provide auto-configuration, embedded servers, opinionated defaults, and production-ready features with minimal configuration.
+
+Core idea:
+👉 Convention over Configuration
+
+Spring Boot Internal Architecture
+Main Components:
+SpringApplication
+Auto Configuration
+Starter Dependencies
+Embedded Web Server
+Spring Container (ApplicationContext)
+Actuator (optional)
+
+High-Level Flow:
+main() →
+SpringApplication.run() →
+Create ApplicationContext →
+Auto Configuration →
+Start Embedded Server →
+Application Ready
+SpringApplication Class
+
+Purpose:
+Bootstraps and launches the Spring Boot application.
+
+Responsibilities:
+Create ApplicationContext
+Load beans
+Start embedded server
+Trigger lifecycle callbacks
+
+Code Example:
+@SpringBootApplication
+public class DemoApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+
+Output:
+Tomcat started on port(s): 8080 (http)
+Started DemoApplication in 3.214 seconds
+
+Auto-Configuration Mechanism
+Definition:
+Auto-configuration automatically configures Spring beans based on:
+Classpath dependencies
+Existing beans
+application.properties / application.yml
+
+Key Annotation:
+@EnableAutoConfiguration
+
+How it Works Internally:
+Reads META-INF/spring.factories
+Loads AutoConfiguration classes
+Uses @Conditional annotations
+
+Common Conditions:
+@ConditionalOnClass
+@ConditionalOnMissingBean
+@ConditionalOnProperty
+
+Example: Auto-configured DataSource
+spring.datasource.url=jdbc:mysql://localhost:3306/test
+spring.datasource.username=root
+spring.datasource.password=root
+
+What happens automatically:
+DataSource bean created
+TransactionManager created
+JdbcTemplate configured
+✅ No XML, No manual beans
+
+Disable Auto Configuration (Interview Favorite)
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+
+Starter Dependencies
+Definition:
+
+Starters are predefined dependency descriptors that bundle commonly used libraries.
+Examples:
+| Starter                      | Purpose             |
+| ---------------------------- | ------------------- |
+| spring-boot-starter-web      | REST + MVC + Tomcat |
+| spring-boot-starter-data-jpa | JPA + Hibernate     |
+| spring-boot-starter-security | Spring Security     |
+| spring-boot-starter-test     | Testing             |
+
+Example:
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+What it Pulls Internally:
+Spring MVC
+Jackson
+Validation
+Embedded Tomcat
+
+Interview Tip:
+👉 Starters do NOT contain code, they manage dependencies only.
+
+Embedded Servers
+Definition:
+Spring Boot embeds web servers so applications run as standalone JARs.
+
+Supported Servers:
+Tomcat (default)
+Jetty
+Undertow
+
+Default (Tomcat):
+http://localhost:8080
+
+Switch to Jetty:
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-web</artifactId>
+  <exclusions>
+    <exclusion>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-tomcat</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-jetty</artifactId>
+</dependency>
+
+Why Embedded Servers Matter (Tricky):
+No WAR deployment needed
+Faster startup
+Microservices friendly
+
+Spring Boot Application Lifecycle
+Startup Phases:
+main() starts
+SpringApplication created
+Environment prepared
+ApplicationContext created
+Bean instantiation
+Embedded server starts
+ApplicationReadyEvent fired
+
+Lifecycle Events Example:
+@Component
+public class AppStartupListener 
+        implements ApplicationListener<ApplicationReadyEvent> {
+
+    @Override
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        System.out.println("Application Started Successfully");
+    }
+}
+
+Output:
+Application Started Successfully
+
+@SpringBootApplication Annotation
+Definition:
+A meta-annotation that combines multiple critical annotations.
+
+Internal Meta-Annotations:
+@SpringBootApplication
+=
+@Configuration
+@EnableAutoConfiguration
+@ComponentScan
+
+Explanation:
+@Configuration → Java-based config
+@ComponentScan → Scans beans
+@EnableAutoConfiguration → Auto setup
+
+Equivalent Manual Configuration (Tricky):
+@Configuration
+@ComponentScan
+@EnableAutoConfiguration
+public class DemoApplication {}
+
+Complete Example (End-to-End)
+Controller:
+@RestController
+public class HelloController {
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Spring Boot Architecture Working!";
+    }
+}
+
+Output (Browser/Postman):
+Spring Boot Architecture Working!
+
+INTERVIEW QUESTIONS & ANSWERS
+Basic Interview Questions
+
+Q1. What is Spring Boot Architecture?
+A:
+It is a layered architecture that provides auto-configuration, embedded servers, and starter dependencies to simplify Spring application development.
+
+Q2. How does auto-configuration work internally?
+A:
+Spring Boot reads spring.factories, loads auto-config classes, and applies conditions based on classpath and configuration.
+
+Q3. What is the role of SpringApplication?
+A:
+It bootstraps the application by creating ApplicationContext, loading beans, and starting the embedded server.
+
+Advanced Interview Questions
+Q4. Difference between Spring and Spring Boot Architecture?
+Spring	                Spring Boot
+------                  -----------
+XML-heavy	              Auto-config
+External server	        Embedded server
+Manual dependencies	    Starter-based
+
+Q5. How do you disable a specific auto-configuration?
+A:
+Using:
+@SpringBootApplication(exclude = ...)
+
+Q6. Can we create a Spring Boot app without @SpringBootApplication?
+A:
+Yes, by manually using @Configuration, @ComponentScan, and @EnableAutoConfiguration.
+
+TRICKY INTERVIEW QUESTIONS (Very Important)
+Q7. Does Spring Boot replace Spring Framework?
+❌ No
+✅ Spring Boot uses Spring Framework internally.
+
+Q8. Are starter dependencies mandatory?
+❌ No
+✅ They simplify dependency management.
+
+Q9. How does Spring Boot decide which beans to create automatically?
+A:
+Using conditional annotations like:
+@ConditionalOnClass
+@ConditionalOnMissingBean
+
+Q10. Can we run Spring Boot without embedded server?
+✅ Yes
+By excluding web starter or setting:
+spring.main.web-application-type=none
+
+One-Line Interview Summary (🔥 Use This)
+Spring Boot architecture simplifies Spring applications by combining auto-configuration, starter dependencies, and embedded servers to enable rapid, production-ready development with minimal configuration.
