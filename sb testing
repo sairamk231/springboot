@@ -1,0 +1,299 @@
+13. Spring Boot Testing
+Testing Strategy:
+Definition:
+
+A testing strategy defines what to test, how to test, and when to test to ensure application quality with minimal cost and time.
+
+Pyramid Strategy (Recommended):
+Unit Tests        → Fast, isolated, many
+Integration Tests → Moderate
+E2E Tests         → Few, slow
+
+In Spring Boot:
+Unit Tests → Business logic
+Slice Tests → Controller / JPA
+Integration Tests → Full context
+E2E Tests → REST / UI
+
+Unit Testing vs Integration Testing:
+Unit Testing:
+Tests single class
+Dependencies are mocked
+No Spring context
+
+Integration Testing:
+Tests multiple layers
+Loads Spring context
+Uses real DB / containers
+
+| Feature        | Unit Test      | Integration Test |
+| -------------- | -------------- | ---------------- |
+| Speed          | Fast           | Slow             |
+| Spring Context | ❌              | ✅                |
+| Dependencies   | Mocked         | Real             |
+| Use Case       | Business logic | End-to-end flow  |
+
+@SpringBootTest:
+Definition:
+
+@SpringBootTest loads the entire Spring Boot application context.
+
+When to Use:
+Full integration testing
+End-to-end API testing
+
+Example:
+@SpringBootTest
+class UserServiceTest {
+
+    @Autowired
+    UserService userService;
+
+    @Test
+    void testCreateUser() {
+        User user = userService.createUser("Sai");
+        assertEquals("Sai", user.getName());
+    }
+}
+
+Output:
+BUILD SUCCESS
+User created successfully
+
+Key Points:
+Slow
+Uses embedded server (optional)
+Can combine with @ActiveProfiles("test")
+
+@WebMvcTest:
+Definition:
+Tests only Controller layer without loading full context.
+
+Loads:
+Controllers
+Filters
+Jackson
+MockMvc
+
+Example:
+@WebMvcTest(UserController.class)
+class UserControllerTest {
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockBean
+    UserService userService;
+
+    @Test
+    void getUserTest() throws Exception {
+        when(userService.getUser()).thenReturn("Sai");
+
+        mockMvc.perform(get("/user"))
+               .andExpect(status().isOk())
+               .andExpect(content().string("Sai"));
+    }
+}
+
+Output:
+HTTP 200 OK
+Sai
+
+Important:
+Service layer must be mocked
+No DB access
+
+@DataJpaTest:
+Definition:
+Used to test Repository layer only.
+
+Loads:
+JPA repositories
+EntityManager
+Embedded DB (H2)
+
+Example:
+@DataJpaTest
+class UserRepositoryTest {
+
+    @Autowired
+    UserRepository repo;
+
+    @Test
+    void testSaveUser() {
+        User user = new User("Sai");
+        repo.save(user);
+
+        assertEquals(1, repo.findAll().size());
+    }
+}
+
+Output:
+Hibernate: insert into user...
+Test passed
+
+Mockito:
+Definition:
+Mockito is used to mock dependencies in unit tests.
+
+Common Annotations:
+@Mock
+@InjectMocks
+@MockBean (Spring)
+
+Example:
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    @Mock
+    UserRepository repo;
+
+    @InjectMocks
+    UserService service;
+
+    @Test
+    void testUser() {
+        when(repo.findName()).thenReturn("Sai");
+        assertEquals("Sai", service.getUser());
+    }
+}
+
+Key Methods:
+when().thenReturn()
+verify()
+doThrow()
+
+MockMvc:
+Definition:
+
+Tests REST APIs without starting the server.
+
+Example:
+mockMvc.perform(post("/users")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"name\":\"Sai\"}"))
+        .andExpect(status().isCreated());
+
+Output:
+201 CREATED
+
+Advantages:
+Fast
+No Tomcat startup
+Ideal for controller tests
+
+TestContainers (Basic Idea):
+Definition:
+Testcontainers allows running real DBs in Docker for tests.
+
+Why Needed:
+H2 ≠ Production DB behavior
+Tests closer to real environment
+
+Example:
+@Testcontainers
+@SpringBootTest
+class UserIT {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:15");
+}
+
+Key Points:
+Uses Docker
+Slower but realistic
+Great for CI/CD
+
+H2 In-Memory Database:
+Definition:
+H2 is a lightweight DB used for testing.
+
+Configuration:
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.jpa.hibernate.ddl-auto=create
+
+Pros:
+Fast
+No installation
+
+Cons:
+SQL behavior differs from MySQL/Postgres
+
+Test Profiles:
+Definition:
+Test profiles separate test configuration from production.
+
+Example:
+@ActiveProfiles("test")
+@SpringBootTest
+class UserTest {}
+
+application-test.yml
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+
+Benefits:
+Clean separation
+Safer testing
+
+Interview Questions & Answers:
+Q1: Difference between @Mock and @MockBean?
+
+Answer:
+@Mock → Mockito only
+@MockBean → Replaces Spring Bean in context
+
+Q2: Why not use @SpringBootTest everywhere?
+
+Answer:
+Slow
+Loads full context
+Overkill for unit tests
+
+Q3: Can @WebMvcTest access DB?
+Answer:
+❌ No. Repository layer is not loaded.
+
+Q4: When to prefer Testcontainers over H2?
+Answer:
+DB-specific features
+Production-like testing
+
+Q5: What happens if @MockBean is missing?
+Answer:
+Application context fails to load
+
+Tricky Interview Questions:
+❓ Why H2 tests pass but prod fails?
+
+Answer:
+SQL differences
+Index handling
+Case sensitivity
+
+❓ Can Mockito mock static methods?
+Answer:
+✅ Yes (Mockito 3.4+) using mockStatic()
+
+❓ Can we combine @WebMvcTest and @SpringBootTest?
+Answer:
+❌ No – conflicting contexts
+
+❓ Does @DataJpaTest rollback?
+Answer:
+✅ Yes, by default after each test
+
+❓ Which is faster: MockMvc or RestTemplate?
+Answer:
+👉 MockMvc (no server startup)
+
+Summary (Interview Ready):
+Unit Tests → Mockito
+Controller Tests → @WebMvcTest + MockMvc
+Repository Tests → @DataJpaTest
+Integration Tests → @SpringBootTest
+Real DB Testing → Testcontainers
+Config Isolation → Test profiles
