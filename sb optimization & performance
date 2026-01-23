@@ -1,0 +1,259 @@
+15. Performance & Optimization (Spring / Spring Boot)
+1. Lazy Initialization
+Definition:
+
+Lazy initialization means beans are created only when they are first requested, not at application startup.
+This improves startup time and memory usage, especially in large applications.
+
+Why Needed:
+Faster application startup
+Avoid loading unused beans
+Reduce memory consumption
+
+Ways to Enable Lazy Initialization:
+1️⃣ At Bean Level
+@Component
+@Lazy
+public class ReportService {
+    public ReportService() {
+        System.out.println("ReportService initialized");
+    }
+}
+
+2️⃣ At Configuration Level
+@Configuration
+@Lazy
+public class AppConfig {
+}
+
+3️⃣ Globally (Spring Boot)
+spring.main.lazy-initialization=true
+
+Output:
+Application started...
+(no bean initialization logs)
+
+Accessing ReportService...
+ReportService initialized
+
+Interview Questions & Answers:
+
+Q1. What is lazy initialization?
+Lazy initialization delays bean creation until it is actually required.
+
+Q2. Default behavior of Spring beans?
+By default, Spring beans are eagerly initialized (except prototype).
+
+Q3. Is lazy loading recommended everywhere?
+No. Use it selectively for heavy or rarely used beans.
+
+Tricky Interview Questions:
+
+Q. Does @Lazy work with @Autowired?
+Yes. Spring creates a proxy, actual bean is created on first method call.
+
+2. Connection Pooling (HikariCP)
+Definition:
+
+Connection pooling maintains a pool of reusable database connections to avoid the overhead of creating new connections repeatedly.
+
+Why HikariCP:
+
+Default in Spring Boot
+Extremely fast & lightweight
+Low latency
+Better throughput
+
+Basic Configuration (application.properties):
+spring.datasource.url=jdbc:mysql://localhost:3306/testdb
+spring.datasource.username=root
+spring.datasource.password=root
+
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.idle-timeout=30000
+spring.datasource.hikari.connection-timeout=20000
+spring.datasource.hikari.max-lifetime=1800000
+
+Code Example:
+@Autowired
+JdbcTemplate jdbcTemplate;
+
+public int getCount() {
+    return jdbcTemplate.queryForObject(
+        "SELECT COUNT(*) FROM employee", Integer.class);
+}
+
+Output:
+Active Connections: 3
+Idle Connections: 7
+Query executed in 5 ms
+
+Interview Questions & Answers:
+
+Q1. What is connection pooling?
+Reusing database connections instead of creating new ones.
+
+Q2. Default connection pool in Spring Boot?
+HikariCP.
+
+Q3. What happens if pool is exhausted?
+Requests wait until a connection is available or timeout occurs.
+
+Tricky Interview Questions:
+
+Q. What happens if maxLifetime < idleTimeout?
+Connections may close unexpectedly → leads to performance issues.
+
+3. Caching (@EnableCaching, @Cacheable)
+Definition:
+
+Caching stores frequently accessed data in memory to avoid repeated database calls.
+
+Enable Caching:
+@SpringBootApplication
+@EnableCaching
+public class App {
+}
+
+@Cacheable Example:
+@Cacheable(value = "employees", key = "#id")
+public Employee getEmployeeById(int id) {
+    System.out.println("Fetching from DB");
+    return repository.findById(id).get();
+}
+
+Execution Flow:
+| Call | Output    |
+| ---- | --------- |
+| 1st  | DB Hit    |
+| 2nd  | Cache Hit |
+
+Output:
+Fetching from DB
+(no output on second call)
+
+Other Cache Annotations:
+| Annotation  | Purpose          |
+| ----------- | ---------------- |
+| @CachePut   | Update cache     |
+| @CacheEvict | Remove cache     |
+| @Caching    | Combine multiple |
+
+Interview Questions & Answers:
+
+Q1. Difference between @Cacheable and @CachePut?
+@Cacheable checks cache first; @CachePut always updates cache.
+
+Q2. Default cache provider in Spring Boot?
+Simple in-memory (ConcurrentHashMap).
+
+Tricky Interview Questions:
+
+Q. Does @Cacheable work for private methods?
+❌ No. Spring uses proxies → only public methods work.
+
+4. Query Optimization
+Definition:
+
+Query optimization improves database query execution time and reduces load.
+
+Best Practices:
+1️⃣ Select Required Columns
+
+❌ Bad:
+
+SELECT * FROM employee;
+
+
+✅ Good:
+
+SELECT id, name FROM employee;
+
+2️⃣ Indexing
+CREATE INDEX idx_emp_email ON employee(email);
+
+3️⃣ Avoid N+1 Problem (JPA)
+@Query("SELECT e FROM Employee e JOIN FETCH e.department")
+List<Employee> findAll();
+
+Interview Questions & Answers:
+
+Q1. What is N+1 problem?
+One query to fetch parent + N queries for children.
+
+Q2. How to solve N+1?
+JOIN FETCH, EntityGraph, batch fetching.
+
+Tricky Interview Questions:
+
+Q. Is indexing always good?
+❌ No. Too many indexes slow down INSERT/UPDATE.
+
+5. Pagination Best Practices
+Definition:
+
+Pagination retrieves data in small chunks instead of loading everything.
+
+Spring Data JPA Example:
+PageRequest page = PageRequest.of(0, 5);
+Page<Employee> employees = repo.findAll(page);
+
+Output:
+Total Pages: 20
+Total Elements: 100
+Current Page Records: 5
+
+Best Practices:
+Always use pagination for large datasets
+Avoid OFFSET for huge tables → use keyset pagination
+
+Tricky Interview Questions:
+
+Q. Why OFFSET is slow?
+Database still scans skipped rows internally.
+
+6. Thread Pool Configuration
+Definition:
+
+Thread pool manages reusable threads for async and concurrent tasks.
+
+@Async Thread Pool Configuration:
+@Configuration
+@EnableAsync
+public class AsyncConfig {
+
+    @Bean
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("Async-");
+        executor.initialize();
+        return executor;
+    }
+}
+
+Async Method:
+@Async
+public void processOrder() {
+    System.out.println(Thread.currentThread().getName());
+}
+
+Output:
+Async-1
+Async-2
+
+Interview Questions & Answers:
+
+Q1. Default executor used by @Async?
+SimpleAsyncTaskExecutor (not a real pool).
+
+Q2. Why custom executor needed?
+Better thread reuse, controlled concurrency.
+
+Tricky Interview Questions:
+
+Q. What happens if queueCapacity is full?
+Tasks are rejected or wait depending on policy.
