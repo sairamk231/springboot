@@ -1,0 +1,306 @@
+10. Spring Boot Security
+Spring Security Basics:
+Definition:
+
+Spring Security is a powerful and customizable authentication and authorization framework used to secure Spring & Spring Boot applications.
+
+It handles:
+Authentication (Who are you?)
+Authorization (What are you allowed to do?)
+Protection against common attacks (CSRF, session fixation, etc.)
+
+How Spring Security Works (High Level Flow):
+
+Request comes to application
+Security Filter Chain intercepts request
+Authentication happens
+Authorization is checked
+Request reaches controller if allowed
+Default Behavior (Without Any Config):
+All endpoints are secured
+Default login form
+Default username: user
+Password printed in console
+
+Output:
+Using generated security password: 3a2f7c...
+
+Authentication & Authorization:
+Authentication:
+
+Verifies user identity
+
+✔ Username
+✔ Password
+✔ Token
+
+Authorization:
+
+Checks user permissions
+
+✔ Roles
+✔ Authorities
+
+Example:
+.hasRole("ADMIN")   // Authorization
+
+Interview Question:
+
+Q: Can a user be authenticated but not authorized?
+A: Yes. User identity is valid, but access to resource is denied.
+
+In-Memory Authentication:
+Definition:
+User details are stored inside application memory.
+
+Used mainly for:
+POC
+Demos
+Testing
+
+Example:
+@Bean
+public UserDetailsService userDetailsService() {
+    UserDetails user = User.withUsername("admin")
+            .password(passwordEncoder().encode("admin123"))
+            .roles("ADMIN")
+            .build();
+
+    return new InMemoryUserDetailsManager(user);
+}
+
+Output:
+Login Successful
+Access granted to ADMIN APIs
+
+Limitations:
+
+❌ Not scalable
+❌ Data lost on restart
+
+Tricky Question:
+
+Q: Can we use in-memory authentication in production?
+A: No. Not scalable and insecure.
+
+Database Authentication:
+Definition:
+
+User credentials are stored in a database.
+
+Required Tables:
+users(username, password, enabled)
+authorities(username, authority)
+
+Entity Example:
+@Entity
+public class User {
+    @Id
+    private String username;
+    private String password;
+    private boolean enabled;
+}
+
+Security Config:
+@Bean
+public UserDetailsService userDetailsService() {
+    return username -> userRepository.findById(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+}
+
+Output:
+User authenticated from database
+
+Interview Question:
+
+Q: How does Spring Security fetch user from DB?
+A: Using UserDetailsService.
+
+Role-Based Access Control (RBAC):
+Definition:
+
+Access is granted based on roles assigned to users.
+
+Example:
+http.authorizeHttpRequests()
+    .requestMatchers("/admin/**").hasRole("ADMIN")
+    .requestMatchers("/user/**").hasAnyRole("USER","ADMIN")
+    .anyRequest().authenticated();
+
+Output:
+403 Forbidden (if role mismatch)
+
+Tricky Question:
+
+Q: Difference between ROLE_ADMIN and ADMIN?
+A: Spring automatically prefixes roles with ROLE_.
+
+Method-Level Security:
+Definition:
+
+Security applied at method level, not URL.
+
+Enable It:
+@EnableMethodSecurity
+
+Annotations:
+@PreAuthorize("hasRole('ADMIN')")
+@PostAuthorize("returnObject.owner == authentication.name")
+@Secured("ROLE_USER")
+
+Example:
+@PreAuthorize("hasAuthority('READ')")
+public String getData() {
+    return "Secure Data";
+}
+
+Output:
+AccessDeniedException
+
+Interview Question:
+
+Q: Which is better: URL or method-level security?
+A: Method-level (more granular).
+
+JWT Authentication:
+Definition:
+
+JWT (JSON Web Token) is a stateless authentication mechanism.
+
+JWT Structure:
+Header.Payload.Signature
+
+Flow:
+
+User logs in
+JWT generated
+Client sends JWT in header
+Server validates token
+
+Header Example:
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+
+JWT Filter Example:
+OncePerRequestFilter
+
+Output:
+200 OK - Token Valid
+
+Advantages:
+
+✔ Stateless
+✔ Scalable
+✔ No session storage
+
+Tricky Question:
+
+Q: Can JWT be revoked?
+A: Not easily (needs blacklist or short expiry).
+
+OAuth2 Basics:
+Definition:
+OAuth2 is an authorization framework used for third-party login.
+
+Common Providers:
+Google
+GitHub
+Facebook
+
+Flow:
+Client requests authorization
+User logs in via provider
+Provider returns token
+App accesses user info
+
+Example Config:
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: xxx
+            client-secret: yyy
+
+Interview Question:
+Q: Difference between OAuth2 and JWT?
+A: OAuth2 is authorization framework; JWT is token format.
+
+CSRF (Cross-Site Request Forgery):
+Definition:
+Attack where malicious site performs actions on behalf of authenticated user.
+
+Spring Security Default:
+
+✔ Enabled for web apps
+❌ Disabled for REST APIs
+
+Disable CSRF (REST):
+http.csrf().disable();
+
+Tricky Question:
+Q: Why CSRF not required for JWT?
+A: JWT is stateless and not cookie-based.
+
+CORS Configuration:
+Definition:
+Allows browser to access APIs from different origin.
+
+Example:
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.addAllowedOrigin("*");
+    config.addAllowedMethod("*");
+    config.addAllowedHeader("*");
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+}
+
+Output:
+CORS policy resolved
+
+Interview Question:
+
+Q: Difference between CORS and CSRF?
+A: CORS is browser security; CSRF is attack prevention.
+
+Password Encoding:
+Definition:
+Passwords must be stored in encrypted form, never plain text.
+
+Recommended Encoder:
+BCryptPasswordEncoder
+
+Example:
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
+
+Output:
+$2a$10$WqX...
+
+Tricky Question:
+
+Q: Why BCrypt is preferred?
+A: Uses salt + adaptive hashing (slow by design).
+
+Top Tricky Interview Questions (4+ Years):
+
+Why Spring Security uses filter chain, not interceptor?
+👉 Filters are servlet-level and more powerful.
+
+Can we use multiple authentication providers?
+👉 Yes, using AuthenticationManager.
+
+Difference between hasRole() and hasAuthority()?
+👉 Role adds ROLE_ prefix automatically.
+
+JWT vs Session — which is better?
+👉 JWT for microservices, Session for monolith.
+
+How to secure microservices?
+👉 OAuth2 + JWT + API Gateway.
