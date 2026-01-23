@@ -1,0 +1,280 @@
+Definition:
+Spring Boot Web is a module built on top of Spring MVC that helps us create RESTful web services quickly using embedded servers (Tomcat/Jetty) and auto-configuration.
+
+Spring MVC in Spring Boot:
+Definition:
+
+Spring MVC is a Model–View–Controller framework used to build web applications.
+In Spring Boot, Spring MVC is auto-configured, so no XML or DispatcherServlet setup is needed.
+
+Key Components:
+DispatcherServlet (Front Controller)
+Controller
+HandlerMapping
+ViewResolver (not used in REST)
+HttpMessageConverters
+
+Flow:
+Client → DispatcherServlet → Controller → Service → Response
+
+RESTful Services:
+Definition:
+REST (Representational State Transfer) is an architectural style where data is exposed as resources using HTTP methods.
+
+HTTP Methods:
+| Method | Purpose                |
+| ------ | ---------------------- |
+| GET    | Fetch data             |
+| POST   | Create data            |
+| PUT    | Update entire resource |
+| PATCH  | Partial update         |
+| DELETE | Remove resource        |
+
+REST Principles:
+
+Stateless
+
+Resource-based URLs
+
+Uses HTTP methods
+
+Data in JSON/XML
+
+Client-Server separation
+
+@RestController:
+Definition:
+
+Combines:
+
+@Controller
+
+@ResponseBody
+
+Used to return JSON/XML instead of views.
+
+Example:
+@RestController
+public class HelloController {
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello Spring Boot";
+    }
+}
+
+Output:
+Hello Spring Boot
+
+@RequestMapping:
+Definition:
+
+Maps HTTP requests to controller methods or classes.
+
+Example:
+@RestController
+@RequestMapping("/api")
+public class UserController {
+
+    @RequestMapping("/users")
+    public String users() {
+        return "Users API";
+    }
+}
+
+URL:
+GET /api/users
+
+@GetMapping, @PostMapping, @PutMapping, @DeleteMapping:
+Definition:
+
+Shortcut annotations for specific HTTP methods.
+
+Example:
+@RestController
+@RequestMapping("/employee")
+public class EmployeeController {
+
+    @GetMapping("/{id}")
+    public String getEmp(@PathVariable int id) {
+        return "Employee ID: " + id;
+    }
+
+    @PostMapping
+    public String addEmp() {
+        return "Employee Added";
+    }
+
+    @PutMapping("/{id}")
+    public String updateEmp(@PathVariable int id) {
+        return "Employee Updated: " + id;
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteEmp(@PathVariable int id) {
+        return "Employee Deleted: " + id;
+    }
+}
+
+Output Examples:
+GET /employee/10 → Employee ID: 10
+POST /employee → Employee Added
+PUT /employee/10 → Employee Updated: 10
+DELETE /employee/10 → Employee Deleted: 10
+
+@PathVariable:
+Definition:
+
+Used to extract values from URL path.
+
+Example:
+@GetMapping("/user/{name}")
+public String getUser(@PathVariable String name) {
+    return "User: " + name;
+}
+
+Output:
+GET /user/Sai → User: Sai
+
+@RequestParam:
+Definition:
+
+Used to extract query parameters from URL.
+
+Example:
+@GetMapping("/search")
+public String search(@RequestParam String keyword) {
+    return "Searching for: " + keyword;
+}
+
+Output:
+GET /search?keyword=java → Searching for: java
+
+Difference: PathVariable vs RequestParam
+| PathVariable | RequestParam  |
+| ------------ | ------------- |
+| Mandatory    | Optional      |
+| Part of URL  | Query string  |
+| `/user/10`   | `/user?id=10` |
+
+@RequestBody:
+Definition:
+
+Used to bind JSON/XML request body to a Java object.
+
+Example:
+@PostMapping("/add")
+public Employee add(@RequestBody Employee emp) {
+    return emp;
+}
+
+class Employee {
+    private int id;
+    private String name;
+    // getters & setters
+}
+
+Request JSON:
+{
+  "id": 1,
+  "name": "Sai"
+}
+
+Response Output:
+{
+  "id": 1,
+  "name": "Sai"
+}
+
+@ResponseEntity:
+Definition:
+
+Used to control:
+HTTP status
+Headers
+Response body
+
+Example:
+@GetMapping("/status")
+public ResponseEntity<String> status() {
+    return new ResponseEntity<>("Success", HttpStatus.OK);
+}
+
+Output:
+Status: 200 OK
+Body: Success
+
+Why ResponseEntity?
+Custom HTTP status
+Better REST practices
+Error handling
+Content Negotiation (JSON/XML):
+Definition:
+Allows clients to receive data in JSON or XML based on request headers.
+
+Accept Header:
+Accept: application/json
+Accept: application/xml
+
+Configuration:
+<dependency>
+    <groupId>com.fasterxml.jackson.dataformat</groupId>
+    <artifactId>jackson-dataformat-xml</artifactId>
+</dependency>
+
+Example:
+@GetMapping(value = "/emp", produces = {"application/json","application/xml"})
+public Employee getEmp() {
+    return new Employee(1, "Sai");
+}
+
+Interview Questions & Answers (Core):
+Q1: Difference between @Controller and @RestController?
+Answer:
+@Controller returns views,
+@RestController returns JSON/XML directly.
+
+Q2: What is DispatcherServlet?
+Answer:
+Front controller that handles all incoming requests in Spring MVC.
+
+Q3: Why Spring Boot REST is stateless?
+Answer:
+Each request is independent; server does not store client state.
+
+Q4: Can we use PUT for partial updates?
+Answer:
+No, PUT replaces entire resource. PATCH is preferred for partial updates.
+
+Q5: What happens if @RequestBody is missing?
+Answer:
+Spring throws HttpMessageNotReadableException.
+
+Tricky Interview Questions (Important):
+Q1: Can @RequestParam be optional?
+Answer:
+Yes
+@RequestParam(required = false)
+
+Q2: What happens if PathVariable name mismatches?
+Answer:
+Spring throws MissingPathVariableException.
+
+Q3: Can @RestController return ResponseEntity?
+Answer:
+Yes, and it’s recommended.
+
+Q4: Default response format in Spring Boot REST?
+Answer:
+JSON (Jackson auto-configured).
+
+Q5: Difference between @GetMapping and @RequestMapping(method=GET)?
+Answer:
+Functionally same, but @GetMapping is cleaner and preferred.
+
+Q6: Can multiple @RequestMapping exist for same URL?
+Answer:
+Yes, but HTTP methods must be different.
+
+Real-Time Interview Tip (4+ yrs):
+Always talk about ResponseEntity, exception handling, HTTP status codes, and REST standards – interviewers expect this maturity.
